@@ -1,0 +1,187 @@
+import { DEMO_CAMPAIGN_ID } from "@/lib/config";
+import { calculateEnemyHealth, calculateLevel } from "@/lib/gameplay";
+import type { CampaignView, QuestView } from "@/lib/types";
+
+const now = "2026-07-17T00:00:00.000Z";
+
+export const demoQuests: QuestView[] = [
+  {
+    id: "00000000-0000-4000-8000-000000000101",
+    campaignId: DEMO_CAMPAIGN_ID,
+    dayNumber: 1,
+    sequenceNumber: 1,
+    title: "Forge Your First Variables",
+    storyIntro: "The Delay Demon has hidden the kingdom's names and numbers. Restore them with your first Python spell.",
+    description: "Create a small Python file with a name, an age, and a learning goal stored in variables, then print each value.",
+    difficulty: "gentle",
+    estimatedMinutes: 15,
+    xpReward: 20,
+    enemyDamage: 10,
+    successRequirements: ["A code editor showing at least three Python variables", "A visible print statement", "Program output visible in a terminal or console"],
+    status: "available",
+    isAdaptive: false,
+    completedAt: null,
+  },
+  {
+    id: "00000000-0000-4000-8000-000000000102",
+    campaignId: DEMO_CAMPAIGN_ID,
+    dayNumber: 1,
+    sequenceNumber: 2,
+    title: "Cross the Conditional Gate",
+    storyIntro: "A rune-locked gate opens only for a program that can make a decision.",
+    description: "Write an if/else program that checks a score or age and prints a different message for each outcome.",
+    difficulty: "balanced",
+    estimatedMinutes: 30,
+    xpReward: 30,
+    enemyDamage: 15,
+    successRequirements: ["Python code with an if and else branch", "A comparison operator is visible", "Terminal output shows one branch running"],
+    status: "available",
+    isAdaptive: false,
+    completedAt: null,
+  },
+  {
+    id: "00000000-0000-4000-8000-000000000103",
+    campaignId: DEMO_CAMPAIGN_ID,
+    dayNumber: 2,
+    sequenceNumber: 3,
+    title: "Break the Looping Curse",
+    storyIntro: "The same stone keeps falling into the path. Command it to move with the rhythm of a loop.",
+    description: "Use a for loop to print the numbers 1 through 10 and label whether each number is odd or even.",
+    difficulty: "balanced",
+    estimatedMinutes: 30,
+    xpReward: 35,
+    enemyDamage: 16,
+    successRequirements: ["A Python for loop using range", "Odd/even logic is visible", "Output includes multiple labeled numbers"],
+    status: "available",
+    isAdaptive: false,
+    completedAt: null,
+  },
+  {
+    id: "00000000-0000-4000-8000-000000000104",
+    campaignId: DEMO_CAMPAIGN_ID,
+    dayNumber: 3,
+    sequenceNumber: 4,
+    title: "Map the List Caverns",
+    storyIntro: "Supplies are scattered through the caverns. Gather them into one ordered pack.",
+    description: "Create a list of five study topics, add one item, remove one item, and print the final list.",
+    difficulty: "gentle",
+    estimatedMinutes: 20,
+    xpReward: 25,
+    enemyDamage: 11,
+    successRequirements: ["A Python list with at least five starting items", "Append and remove operations are visible", "The final list output is visible"],
+    status: "locked",
+    isAdaptive: false,
+    completedAt: null,
+  },
+  {
+    id: "00000000-0000-4000-8000-000000000105",
+    campaignId: DEMO_CAMPAIGN_ID,
+    dayNumber: 4,
+    sequenceNumber: 5,
+    title: "Summon a Reusable Spell",
+    storyIntro: "The kingdom needs a spell that can be cast again without rewriting the ancient words.",
+    description: "Write a function that accepts a name and returns a personalised welcome message. Call it twice with different names.",
+    difficulty: "balanced",
+    estimatedMinutes: 30,
+    xpReward: 35,
+    enemyDamage: 16,
+    successRequirements: ["A function defined with def", "The function accepts a parameter", "Two different results appear in the output"],
+    status: "locked",
+    isAdaptive: false,
+    completedAt: null,
+  },
+  {
+    id: "00000000-0000-4000-8000-000000000106",
+    campaignId: DEMO_CAMPAIGN_ID,
+    dayNumber: 5,
+    sequenceNumber: 6,
+    title: "Tame the Error Wraith",
+    storyIntro: "A wraith feeds on broken input. Trap it before it can crash your spellbook.",
+    description: "Build a number input program that handles invalid text with try/except and shows a helpful message.",
+    difficulty: "challenging",
+    estimatedMinutes: 45,
+    xpReward: 50,
+    enemyDamage: 22,
+    successRequirements: ["Try and except blocks are visible", "The program converts input to a number", "A friendly error message appears for invalid input"],
+    status: "locked",
+    isAdaptive: false,
+    completedAt: null,
+  },
+  {
+    id: "00000000-0000-4000-8000-000000000107",
+    campaignId: DEMO_CAMPAIGN_ID,
+    dayNumber: 7,
+    sequenceNumber: 7,
+    title: "Confront the Delay Demon",
+    storyIntro: "At the final gate, every rune you learned must work together in one practical creation.",
+    description: "Create a command-line study tracker that stores topics in a list, uses a function to display them, and lets the user mark one complete.",
+    difficulty: "challenging",
+    estimatedMinutes: 60,
+    xpReward: 60,
+    enemyDamage: 25,
+    successRequirements: ["A working Python file with a list and at least one function", "User input changes a study topic's state", "Terminal output shows the updated tracker"],
+    status: "locked",
+    isAdaptive: false,
+    completedAt: null,
+  },
+];
+
+export const adaptiveDemoQuest: QuestView = {
+  id: "00000000-0000-4000-8000-000000000108",
+  campaignId: DEMO_CAMPAIGN_ID,
+  dayNumber: 2,
+  sequenceNumber: 8,
+  title: "Momentum Challenge: Explain the Spell",
+  storyIntro: "Your first victory weakens the Delay Demon. Seal the lesson by teaching the rune back to the guild.",
+  description: "Add three short comments to your completed Python file explaining what the variables, logic, and output do.",
+  difficulty: "gentle",
+  estimatedMinutes: 15,
+  xpReward: 20,
+  enemyDamage: 9,
+  successRequirements: ["The completed Python file is visible", "At least three meaningful comments explain the code"],
+  status: "available",
+  isAdaptive: true,
+  completedAt: null,
+};
+
+export function getDemoCampaign(completedQuestIds: string[] = []): CampaignView {
+  const quests = demoQuests.map((quest) => ({
+    ...quest,
+    status: completedQuestIds.includes(quest.id) ? "completed" as const : quest.status,
+    completedAt: completedQuestIds.includes(quest.id) ? now : null,
+  }));
+
+  if (completedQuestIds.length > 0) {
+    quests.push({
+      ...adaptiveDemoQuest,
+      status: completedQuestIds.includes(adaptiveDemoQuest.id) ? "completed" : "available",
+      completedAt: completedQuestIds.includes(adaptiveDemoQuest.id) ? now : null,
+    });
+  }
+
+  const completed = quests.filter((quest) => quest.status === "completed");
+  const totalXp = completed.reduce((sum, quest) => sum + quest.xpReward, 0);
+  const totalDamage = completed.reduce((sum, quest) => sum + quest.enemyDamage, 0);
+  const enemyCurrentHealth = calculateEnemyHealth(100, totalDamage);
+
+  return {
+    id: DEMO_CAMPAIGN_ID,
+    goal: "Learn Python fundamentals in seven days.",
+    dailyMinutes: 30,
+    mainObstacle: "Procrastination",
+    difficulty: "balanced",
+    campaignName: "The Kingdom of Python",
+    heroName: "Code Apprentice",
+    enemyName: "Delay Demon",
+    enemyDescription: "A many-eyed shadow that grows stronger whenever a useful task is postponed.",
+    story: "The Kingdom of Python has fallen under the Delay Demon's endless tomorrow-spell. Over seven focused days, you will recover the runes of variables, decisions, loops, collections, and functions—turning practical practice into the power needed to break the curse.",
+    enemyMaxHealth: 100,
+    enemyCurrentHealth,
+    status: enemyCurrentHealth === 0 ? "won" : "active",
+    totalXp,
+    currentLevel: calculateLevel(totalXp),
+    userEmail: "hero@lifequest.demo",
+    quests,
+    isDemo: true,
+  };
+}
