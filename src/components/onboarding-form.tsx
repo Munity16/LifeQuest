@@ -63,6 +63,13 @@ export function OnboardingForm({ isDemo }: { isDemo: boolean }) {
   });
   const obstacle = useWatch({ control, name: "mainObstacle" });
   const goal = useWatch({ control, name: "goal" });
+  const dailyMinutes = useWatch({ control, name: "dailyMinutes" });
+  const difficulty = useWatch({ control, name: "difficulty" });
+  const customObstacle = useWatch({ control, name: "customObstacle" });
+  const obstaclePreview = obstacle === "other"
+    ? customObstacle?.trim() || "Custom obstacle"
+    : obstacles.find(([value]) => value === obstacle)?.[1] || "Choose an obstacle";
+  const difficultyPreview = difficulties.find(([value]) => value === difficulty)?.[1] || "Choose difficulty";
 
   async function onSubmit(values: OnboardingInput) {
     setServerError(null);
@@ -86,8 +93,20 @@ export function OnboardingForm({ isDemo }: { isDemo: boolean }) {
 
   return (
     <form className="onboarding-form" onSubmit={handleSubmit(onSubmit)}>
+      <nav className="onboarding-step-nav" aria-label="Campaign setup steps">
+        <a href="#goal-step"><span>1</span> Goal</a>
+        <a href="#pace-step"><span>2</span> Pace</a>
+        <a href="#obstacle-step"><span>3</span> Nemesis</a>
+        <a href="#difficulty-step"><span>4</span> Difficulty</a>
+      </nav>
+      <div className="onboarding-loadout" aria-live="polite">
+        <strong>Campaign preview</strong>
+        <span><Clock3 size={14} aria-hidden="true" /> {dailyMinutes || 30} min/day</span>
+        <span><Brain size={14} aria-hidden="true" /> {obstaclePreview}</span>
+        <span><Gauge size={14} aria-hidden="true" /> {difficultyPreview}</span>
+      </div>
       {isDemo && <div className="demo-notice"><Sparkles size={16} /><span>Demo mode uses the pre-generated Python campaign for presentation reliability.</span></div>}
-      <fieldset className="onboarding-section onboarding-goal">
+      <fieldset className="onboarding-section onboarding-goal" id="goal-step">
         <StepHeading step={1} title="Choose your destination" subtitle="What do you want to achieve?" />
         <div className="onboarding-section-body">
           <label className="sr-only" htmlFor="goal">Your goal</label>
@@ -97,7 +116,7 @@ export function OnboardingForm({ isDemo }: { isDemo: boolean }) {
         </div>
       </fieldset>
 
-      <fieldset className="onboarding-section">
+      <fieldset className="onboarding-section" id="pace-step">
         <StepHeading step={2} title="Set your daily pace" subtitle="How much focused time can you protect?" />
         <div className="onboarding-section-body">
           <Controller
@@ -129,7 +148,7 @@ export function OnboardingForm({ isDemo }: { isDemo: boolean }) {
         </div>
       </fieldset>
 
-      <fieldset className="onboarding-section">
+      <fieldset className="onboarding-section" id="obstacle-step">
         <StepHeading step={3} title="Name your nemesis" subtitle="What most often blocks your progress?" />
         <div className="onboarding-section-body">
           <div className="choice-grid obstacle-grid">
@@ -140,7 +159,7 @@ export function OnboardingForm({ isDemo }: { isDemo: boolean }) {
         </div>
       </fieldset>
 
-      <fieldset className="onboarding-section">
+      <fieldset className="onboarding-section" id="difficulty-step">
         <StepHeading step={4} title="Choose your difficulty" subtitle="You can succeed at every level." />
         <div className="onboarding-section-body">
           <div className="difficulty-grid">
