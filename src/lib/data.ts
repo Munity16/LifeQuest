@@ -102,7 +102,25 @@ export async function getQuest(campaignId: string, questId: string) {
   if (!campaign) return null;
   const quest = campaign.quests.find((item) => item.id === questId);
   if (!quest) return null;
-  return { campaign, quest };
+  if (campaign.isDemo) return { campaign, quest, latestProof: null };
+
+  const supabase = await createSupabaseServerClient();
+  const { data: authData } = await supabase.auth.getUser();
+  if (!authData.user) return null;
+  const { data: submission, error } = await supabase
+    .from("quest_submissions")
+    .select("id,proof_deleted_at")
+    .eq("quest_id", questId)
+    .eq("user_id", authData.user.id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new AppError("The proof retention status could not be loaded.", 500, "PROOF_STATUS_LOAD_FAILED");
+  return {
+    campaign,
+    quest,
+    latestProof: submission ? { submissionId: submission.id, deletedAt: submission.proof_deleted_at } : null,
+  };
 }
 
 export async function persistGeneratedCampaign(

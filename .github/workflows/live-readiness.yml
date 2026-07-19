@@ -1,0 +1,28 @@
+name: Live readiness
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  staging:
+    name: Staging OpenAI and Supabase smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: staging
+    env:
+      PLAYWRIGHT_BASE_URL: ${{ vars.LIVE_E2E_BASE_URL }}
+      LIVE_E2E: "true"
+      LIVE_E2E_USER_EMAIL: ${{ secrets.LIVE_E2E_USER_EMAIL }}
+      LIVE_E2E_USER_PASSWORD: ${{ secrets.LIVE_E2E_USER_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.19.0
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e -- --grep @live

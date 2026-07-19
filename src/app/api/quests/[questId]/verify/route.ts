@@ -12,9 +12,11 @@ import { encodeDemoProgress, getDemoCompletedQuestIds } from "@/lib/demo-session
 import { AppError, errorResponse } from "@/lib/errors";
 import { getOpenAIModel } from "@/lib/openai/client";
 import { generateAdaptiveQuestWithAI, moderateProofImage, verifyProofWithAI } from "@/lib/openai/services";
+import { enforceRateLimit } from "@/lib/rate-limit";
 import { verificationRequestSchema } from "@/lib/schemas";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { operationalErrorCode, operationalStatus, recordOperationalEvent } from "@/lib/telemetry";
 import type { Json } from "@/types/database";
 
 const completionRpcSchema = z.object({
@@ -28,12 +30,19 @@ const completionRpcSchema = z.object({
 });
 
 export async function POST(request: Request, context: { params: Promise<{ questId: string }> }) {
+  const startedAt = performance.now();
+  const traceId = crypto.randomUUID();
   try {
-    const startedAt = performance.now();
-    const traceId = crypto.randomUUID();
     const { questId } = await context.params;
     const { submissionId, demoOutcome } = verificationRequestSchema.parse(await request.json());
     const auth = await getAuthContext();
+    if (auth.kind === "anonymous") throw new AppError("Sign in to verify proof.", 401, "UNAUTHORIZED");
+    await enforceRateLimit(request, {
+      action: "proof.verify",
+      limit: 20,
+      windowSeconds: 60 * 60,
+      subject: auth.kind === "user" ? auth.user.id : undefined,
+    });
 
     if (auth.kind === "demo") {
       if (!isDemoEnabled()) throw new AppError("Demo verification is disabled.", 403, "DEMO_DISABLED");
@@ -42,6 +51,7 @@ export async function POST(request: Request, context: { params: Promise<{ questI
       const quest = before.quests.find((item) => item.id === questId);
       if (!quest || submissionId !== questId) throw new AppError("Submission not found.", 404, "NOT_FOUND");
       if (demoOutcome === "rejected") {
+        await recordOperationalEvent({ eventName: "proof.verify", traceId, status: "rejected", latencyMs: Math.round(performance.now() - startedAt), model: "seeded-demo", metadata: { demo: true } });
         return NextResponse.json({
           verified: false,
           duplicate: false,
@@ -109,9 +119,9 @@ export async function POST(request: Request, context: { params: Promise<{ questI
         path: "/",
         maxAge: 60 * 60 * 8,
       });
+      await recordOperationalEvent({ eventName: "proof.verify", traceId, status: "success", latencyMs: Math.round(performance.now() - startedAt), model: "seeded-demo", metadata: { demo: true, duplicate } });
       return response;
     }
-    if (auth.kind !== "user") throw new AppError("Sign in to verify proof.", 401, "UNAUTHORIZED");
 
     const admin = createSupabaseAdminClient();
     const { data: submission, error: submissionError } = await admin
@@ -122,6 +132,7 @@ export async function POST(request: Request, context: { params: Promise<{ questI
       .eq("user_id", auth.user.id)
       .maybeSingle();
     if (submissionError || !submission) throw new AppError("Submission not found.", 404, "NOT_FOUND");
+    if (!submission.storage_path || submission.proof_deleted_at) throw new AppError("This proof image has been deleted.", 410, "PROOF_DELETED");
 
     const supabase = await createSupabaseServerClient();
     const { data: quest, error: questError } = await supabase
@@ -153,7 +164,9 @@ export async function POST(request: Request, context: { params: Promise<{ questI
         })
         .eq("id", submission.id);
       if (moderationSaveError) throw new AppError("The safety result could not be saved. Please retry safely.", 500, "VERIFICATION_SAVE_FAILED");
+      await recordOperationalEvent({ eventName: "proof.verify", traceId, status: "rejected", latencyMs: Math.round(performance.now() - startedAt), model: moderation.model, metadata: { safetyFlagged: true } });
       return Response.json({
+        submissionId: submission.id,
         verified: false,
         confidence: 0,
         reason,
@@ -206,7 +219,8 @@ export async function POST(request: Request, context: { params: Promise<{ questI
         console.error("Rejected verification persistence failed", rejectionError);
         throw new AppError("The verification result could not be saved. Please retry safely.", 500, "VERIFICATION_SAVE_FAILED");
       }
-      return Response.json({ ...verification, verified: false, xpAwarded: 0, enemyDamage: 0, aiReceipt });
+      await recordOperationalEvent({ eventName: "proof.verify", traceId, status: "rejected", latencyMs: Math.round(performance.now() - startedAt), model: getOpenAIModel(), metadata: { safetyFlagged: false } });
+      return Response.json({ submissionId: submission.id, ...verification, verified: false, xpAwarded: 0, enemyDamage: 0, aiReceipt });
     }
 
     const { data: completionData, error: completionError } = await admin.rpc("complete_quest", {
@@ -276,8 +290,10 @@ export async function POST(request: Request, context: { params: Promise<{ questI
       }
     }
 
-    return Response.json({ ...verification, ...completion, adaptiveQuestCreated, aiReceipt });
+    await recordOperationalEvent({ eventName: "proof.verify", traceId, status: "success", latencyMs: Math.round(performance.now() - startedAt), model: getOpenAIModel(), metadata: { duplicate: completion.duplicate, adaptiveQuestCreated } });
+    return Response.json({ submissionId: submission.id, ...verification, ...completion, adaptiveQuestCreated, aiReceipt });
   } catch (error) {
+    await recordOperationalEvent({ eventName: "proof.verify", traceId, status: operationalStatus(error), latencyMs: Math.round(performance.now() - startedAt), errorCode: operationalErrorCode(error) });
     return errorResponse(error);
   }
 }

@@ -23,7 +23,10 @@ vi.mock("@/lib/openai/services", () => ({
   generateAdaptiveQuestWithAI: mocks.generateAdaptiveQuestWithAI,
 }));
 vi.mock("@/lib/openai/client", () => ({ getOpenAIModel: () => "gpt-5.6" }));
-vi.mock("@/lib/supabase/admin", () => ({ createSupabaseAdminClient: mocks.createSupabaseAdminClient }));
+vi.mock("@/lib/supabase/admin", () => ({
+  createSupabaseAdminClient: mocks.createSupabaseAdminClient,
+  isSupabaseAdminConfigured: () => false,
+}));
 vi.mock("@/lib/supabase/server", () => ({ createSupabaseServerClient: mocks.createSupabaseServerClient }));
 vi.mock("@/lib/data", () => ({ campaignProgress: () => 14, getCampaign: mocks.getCampaign }));
 

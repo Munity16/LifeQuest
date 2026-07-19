@@ -6,11 +6,11 @@ Last updated: 2026-07-19
 
 - **Framework and versions:** Next.js 16.2.10 App Router, React 19.2.7, strict TypeScript 5.9.3, Tailwind CSS 4.3.3, Supabase JS 2.110.7, OpenAI JS 6.48.0, Zod 4.4.3, and Vitest 4.1.10.
 - **Package manager:** npm with `package-lock.json` lockfile version 3. The Windows host requires `npm.cmd` because its PowerShell policy blocks `npm.ps1`.
-- **Current branch:** `codex/resume-lifequest`. Recovery began from an unborn `master` branch with no commits and all existing project files untracked; no user files were reset or discarded.
+- **Current branch:** `codex/production-hardening`, based on `origin/main`; the README visual work remains isolated in its separate pull request.
 - **Existing pages:** landing, login, signup, onboarding, campaign dashboard, quest detail/proof, profile, global loading, not-found, and error states.
 - **Existing API routes:** login, signup, logout, Supabase auth callback, demo start/reset, campaign generation, campaign lookup, profile progress/preferences, proof upload, proof verification/progression, and server-mediated Realtime narration.
 - **Existing database tables:** `profiles`, `campaigns`, `quests`, `quest_submissions`, and `progress_events` across three ordered migrations.
-- **Existing tests:** 13 Vitest files with 64 tests covering schemas, onboarding form serialization, hero ranks, appearance preferences, achievements, quest-map state and interaction, gameplay, proof files, mocked OpenAI services, moderation, reset/narration/preferences Route Handlers, SQL security contracts, and the seeded golden path.
+- **Existing tests:** 15 Vitest files with 68 tests plus Playwright Chromium coverage for the seeded golden path and 320px campaign/quest layouts.
 - **Current build condition:** development server starts, required UI/demo routes return successful responses, lint/typecheck/tests pass, and the Next.js production build succeeds with auth-dependent pages classified as dynamic.
 - **Environment condition:** Local demo mode is explicitly enabled in the ignored `.env.local`; live Supabase and OpenAI credentials remain absent, so storage, RLS, live AI, and Vercel behavior cannot be exercised in this workspace and are not claimed as live-verified.
 
@@ -64,11 +64,17 @@ Development stopped after backend, migration, demo-data, and reusable-component 
 - `VERIFIED` Service-role-only, row-locking progression RPC with once-only XP/damage, deterministic level calculation, clamped enemy health, progress events, and next-core-quest unlock.
 - `VERIFIED` Adaptive quest runs only after progression commits and cannot undo a completed quest.
 - `VERIFIED` README, environment reference, Supabase/storage/auth setup, Vercel steps, known limitations, and sub-three-minute demo script.
+- `VERIFIED` GitHub Actions quality and browser jobs run lint, strict TypeScript, Vitest, production build, and Playwright on pull requests and `main`.
+- `VERIFIED` Server-only database-backed rate limiting protects authentication, generation, proof, deletion, and narration routes; local/demo mode uses an explicitly non-production in-memory fallback.
+- `VERIFIED` Privacy-safe operational telemetry stores only allowlisted event, status, latency, model, error-code, and numeric/boolean metadata fields.
+- `VERIFIED` User-triggered proof deletion removes the private object while preserving the verification receipt and progression; a protected Vercel cron route applies the configured retention window in bounded batches.
+- `VERIFIED` Production environment validation and a manually triggered staging Playwright workflow are present without committing credentials.
 
 ## Partially completed functionality
 
 - `BLOCKED` Live signup/login, profile trigger, campaign persistence, private storage, GPT-5.6 generation/vision, RLS isolation, and refresh persistence require real Supabase/OpenAI credentials.
 - `BLOCKED` Vercel deployment and production callback validation require a Vercel project and production environment values.
+- `BLOCKED` The live-readiness workflow requires a configured GitHub `staging` environment, deployment URL, and confirmed test-user secrets.
 - `VERIFIED` In-app browser QA covers the desktop campaign, the 320px campaign and quest layouts, proof upload, demo verification, victory feedback, HUD progression, and the refreshed completed quest state.
 - `COMPLETE` Adaptive quest generation exists as optional best-effort behavior; production quality evaluation is intentionally deferred until after live critical-path verification.
 
@@ -80,7 +86,7 @@ Development stopped after backend, migration, demo-data, and reusable-component 
 ## Missing critical functionality
 
 - `BLOCKED` No critical code path is knowingly missing, but the live completion criteria cannot be verified without applying both migrations and supplying external credentials.
-- `BLOCKED` A manual two-user RLS/storage isolation test is still required against the target Supabase project.
+- `BLOCKED` A manual two-user RLS/storage isolation and proof-deletion test is still required against the target Supabase project.
 - `BLOCKED` A live accepted/rejected GPT-5.6 proof pair and a duplicate verification retry are still required against the production model/account.
 - `BLOCKED` The private proof eval requires sanitized local images and an OpenAI key before a real benchmark score can be produced.
 
@@ -95,6 +101,15 @@ Development stopped after backend, migration, demo-data, and reusable-component 
 | 5 | `VERIFIED` | Add README, demo script, environment, Supabase, storage, auth callback, and Vercel instructions. |
 | 6 | `VERIFIED` | Run lint, typecheck, tests, production build, and local HTTP smoke checks. |
 | 7 | `BLOCKED` | Apply migrations and run the live two-user Supabase/OpenAI/Vercel golden path after credentials and target projects are supplied. |
+
+## Production hardening verification — 2026-07-19
+
+- `npm.cmd run typecheck`: `VERIFIED`, strict TypeScript passes after adding retention, rate-limit, telemetry, CI, and Playwright boundaries.
+- `npm.cmd run test`: `VERIFIED`, 15 files and 68 tests pass, including rate-limit behavior, deletion receipts, and migration security contracts.
+- `npm.cmd run test:e2e`: `VERIFIED`, two Chromium tests pass for the seeded golden path and 320px layouts; the credential-gated `@live` test is correctly skipped unless explicitly enabled.
+- `npm.cmd run build`: `VERIFIED`, the production build includes the protected proof-retention cron route and all expected application routes.
+- GitHub Actions: `VERIFIED` repository workflow definitions cover the strict quality gate and Chromium golden path; remote execution awaits the branch push.
+- Live Vercel/Supabase/OpenAI verification: `BLOCKED`, because this workspace has no production project binding or live credentials.
 
 ## Verification log
 

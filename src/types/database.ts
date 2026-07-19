@@ -26,13 +26,23 @@ export interface Database {
         { status?: string; completed_at?: string | null; updated_at?: string }
       >;
       quest_submissions: Table<
-        { id: string; quest_id: string; campaign_id: string; user_id: string; storage_path: string; verification_status: string; verification_confidence: number | null; verification_reason: string | null; model_used: string | null; xp_awarded: number; enemy_damage_awarded: number; created_at: string; verified_at: string | null },
-        { id?: string; quest_id: string; campaign_id: string; user_id: string; storage_path: string; verification_status?: string; verification_confidence?: number | null; verification_reason?: string | null; model_used?: string | null; xp_awarded?: number; enemy_damage_awarded?: number; created_at?: string; verified_at?: string | null },
-        { verification_status?: string; verification_confidence?: number | null; verification_reason?: string | null; model_used?: string | null; verified_at?: string | null }
+        { id: string; quest_id: string; campaign_id: string; user_id: string; storage_path: string | null; proof_deleted_at: string | null; verification_status: string; verification_confidence: number | null; verification_reason: string | null; model_used: string | null; xp_awarded: number; enemy_damage_awarded: number; created_at: string; verified_at: string | null },
+        { id?: string; quest_id: string; campaign_id: string; user_id: string; storage_path: string | null; proof_deleted_at?: string | null; verification_status?: string; verification_confidence?: number | null; verification_reason?: string | null; model_used?: string | null; xp_awarded?: number; enemy_damage_awarded?: number; created_at?: string; verified_at?: string | null },
+        { storage_path?: string | null; proof_deleted_at?: string | null; verification_status?: string; verification_confidence?: number | null; verification_reason?: string | null; model_used?: string | null; verified_at?: string | null }
       >;
       progress_events: Table<
         { id: string; user_id: string; campaign_id: string; quest_id: string | null; event_type: string; xp_change: number; enemy_health_change: number; metadata: Json | null; created_at: string },
         { id?: string; user_id: string; campaign_id: string; quest_id?: string | null; event_type: string; xp_change?: number; enemy_health_change?: number; metadata?: Json | null; created_at?: string },
+        never
+      >;
+      api_rate_limits: Table<
+        { identifier_hash: string; action: string; window_started_at: string; request_count: number; expires_at: string },
+        { identifier_hash: string; action: string; window_started_at?: string; request_count?: number; expires_at: string },
+        { window_started_at?: string; request_count?: number; expires_at?: string }
+      >;
+      operational_events: Table<
+        { id: string; event_name: string; trace_id: string; status: string; latency_ms: number | null; error_code: string | null; model: string | null; metadata: Json; created_at: string },
+        { id?: string; event_name: string; trace_id: string; status: string; latency_ms?: number | null; error_code?: string | null; model?: string | null; metadata?: Json; created_at?: string },
         never
       >;
     };
@@ -44,6 +54,10 @@ export interface Database {
       };
       complete_quest: {
         Args: { p_submission_id: string; p_confidence: number; p_reason: string; p_model_used: string };
+        Returns: Json;
+      };
+      consume_api_rate_limit: {
+        Args: { p_identifier_hash: string; p_action: string; p_limit: number; p_window_seconds: number };
         Returns: Json;
       };
     };

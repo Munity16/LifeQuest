@@ -16,6 +16,13 @@ export class ConfigurationError extends AppError {
   }
 }
 
+export class RateLimitError extends AppError {
+  constructor(public readonly retryAfterSeconds: number) {
+    super("Too many requests. Wait a moment, then try again.", 429, "RATE_LIMITED");
+    this.name = "RateLimitError";
+  }
+}
+
 export function errorResponse(error: unknown) {
   if (error instanceof SyntaxError) {
     return Response.json(
@@ -44,7 +51,12 @@ export function errorResponse(error: unknown) {
 
   return Response.json(
     { error: { code: appError.code, message: appError.message } },
-    { status: appError.status },
+    {
+      status: appError.status,
+      headers: appError instanceof RateLimitError
+        ? { "Retry-After": String(appError.retryAfterSeconds), "Cache-Control": "no-store" }
+        : undefined,
+    },
   );
 }
 import { ZodError } from "zod";
