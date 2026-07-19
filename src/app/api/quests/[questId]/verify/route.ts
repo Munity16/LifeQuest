@@ -11,7 +11,7 @@ import { getDemoCampaign } from "@/lib/demo-data";
 import { encodeDemoProgress, getDemoCompletedQuestIds } from "@/lib/demo-session";
 import { AppError, errorResponse } from "@/lib/errors";
 import { getOpenAIModel } from "@/lib/openai/client";
-import { generateAdaptiveQuestWithAI, verifyProofWithAI } from "@/lib/openai/services";
+import { generateAdaptiveQuestWithAI, moderateProofImage, verifyProofWithAI } from "@/lib/openai/services";
 import { verificationRequestSchema } from "@/lib/schemas";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -29,8 +29,10 @@ const completionRpcSchema = z.object({
 
 export async function POST(request: Request, context: { params: Promise<{ questId: string }> }) {
   try {
+    const startedAt = performance.now();
+    const traceId = crypto.randomUUID();
     const { questId } = await context.params;
-    const { submissionId } = verificationRequestSchema.parse(await request.json());
+    const { submissionId, demoOutcome } = verificationRequestSchema.parse(await request.json());
     const auth = await getAuthContext();
 
     if (auth.kind === "demo") {
@@ -39,6 +41,35 @@ export async function POST(request: Request, context: { params: Promise<{ questI
       const before = getDemoCampaign(completedIds);
       const quest = before.quests.find((item) => item.id === questId);
       if (!quest || submissionId !== questId) throw new AppError("Submission not found.", 404, "NOT_FOUND");
+      if (demoOutcome === "rejected") {
+        return NextResponse.json({
+          verified: false,
+          duplicate: false,
+          reason: "The demo rejection sample deliberately hides the required output. Retake the proof with every victory condition clearly visible.",
+          confidence: 0.18,
+          requirementsAssessment: quest.successRequirements.map((requirement) => ({
+            requirement,
+            satisfied: false,
+            explanation: "This requirement is not readable in the demonstration image.",
+          })),
+          xpAwarded: 0,
+          enemyDamage: 0,
+          totalXp: before.totalXp,
+          currentLevel: before.currentLevel,
+          enemyCurrentHealth: before.enemyCurrentHealth,
+          levelledUp: false,
+          adaptiveQuestCreated: false,
+          demoFallback: true,
+          aiReceipt: {
+            traceId,
+            mode: "demo",
+            model: "seeded-demo",
+            latencyMs: Math.max(1, Math.round(performance.now() - startedAt)),
+            safety: "simulated",
+            schemaValidated: true,
+          },
+        });
+      }
       const duplicate = completedIds.includes(questId);
       const nextIds = duplicate ? completedIds : [...completedIds, questId];
       const after = getDemoCampaign(nextIds);
@@ -49,6 +80,11 @@ export async function POST(request: Request, context: { params: Promise<{ questI
           ? "This demo quest was already completed; no additional reward was applied."
           : "Demo safeguard accepted this proof so the presentation can continue. Production verification always uses the configured OpenAI model.",
         confidence: 0.99,
+        requirementsAssessment: quest.successRequirements.map((requirement) => ({
+          requirement,
+          satisfied: true,
+          explanation: "The seeded demo marks this visible requirement as satisfied for presentation reliability.",
+        })),
         xpAwarded: duplicate ? 0 : quest.xpReward,
         enemyDamage: duplicate ? 0 : quest.enemyDamage,
         totalXp: after.totalXp,
@@ -57,6 +93,14 @@ export async function POST(request: Request, context: { params: Promise<{ questI
         levelledUp: after.currentLevel > before.currentLevel,
         adaptiveQuestCreated: !duplicate && completedIds.length === 0,
         demoFallback: true,
+        aiReceipt: {
+          traceId,
+          mode: "demo",
+          model: "seeded-demo",
+          latencyMs: Math.max(1, Math.round(performance.now() - startedAt)),
+          safety: "simulated",
+          schemaValidated: true,
+        },
       });
       response.cookies.set(DEMO_PROGRESS_COOKIE, encodeDemoProgress(nextIds), {
         httpOnly: true,
@@ -94,6 +138,42 @@ export async function POST(request: Request, context: { params: Promise<{ questI
     if (downloadError || !proofBlob) throw new AppError("The proof image could not be read.", 500, "PROOF_READ_FAILED");
     const imageDataUrl = `data:${proofBlob.type || "image/jpeg"};base64,${Buffer.from(await proofBlob.arrayBuffer()).toString("base64")}`;
     const requirements = z.array(z.string()).parse(quest.success_requirements);
+    const moderation = await moderateProofImage(imageDataUrl);
+    if (moderation.flagged) {
+      const reason = "This proof could not be reviewed because it did not pass the image safety check. Choose a different image without sensitive or harmful content.";
+      console.warn("Proof rejected by safety screening", { traceId, categories: moderation.categories });
+      const { error: moderationSaveError } = await admin
+        .from("quest_submissions")
+        .update({
+          verification_status: "rejected",
+          verification_confidence: 0,
+          verification_reason: reason,
+          model_used: moderation.model,
+          verified_at: new Date().toISOString(),
+        })
+        .eq("id", submission.id);
+      if (moderationSaveError) throw new AppError("The safety result could not be saved. Please retry safely.", 500, "VERIFICATION_SAVE_FAILED");
+      return Response.json({
+        verified: false,
+        confidence: 0,
+        reason,
+        requirementsAssessment: requirements.map((requirement) => ({
+          requirement,
+          satisfied: false,
+          explanation: "Verification stopped at the safety gate before this condition was assessed.",
+        })),
+        xpAwarded: 0,
+        enemyDamage: 0,
+        aiReceipt: {
+          traceId,
+          mode: "live",
+          model: moderation.model,
+          latencyMs: Math.max(1, Math.round(performance.now() - startedAt)),
+          safety: "flagged",
+          schemaValidated: false,
+        },
+      });
+    }
     const verification = await verifyProofWithAI({
       quest: {
         title: quest.title,
@@ -102,6 +182,14 @@ export async function POST(request: Request, context: { params: Promise<{ questI
       },
       imageDataUrl,
     });
+    const aiReceipt = {
+      traceId,
+      mode: "live" as const,
+      model: getOpenAIModel(),
+      latencyMs: Math.max(1, Math.round(performance.now() - startedAt)),
+      safety: "passed" as const,
+      schemaValidated: true,
+    };
 
     if (!verification.verified || verification.confidence < VERIFICATION_CONFIDENCE_THRESHOLD) {
       const { error: rejectionError } = await admin
@@ -118,7 +206,7 @@ export async function POST(request: Request, context: { params: Promise<{ questI
         console.error("Rejected verification persistence failed", rejectionError);
         throw new AppError("The verification result could not be saved. Please retry safely.", 500, "VERIFICATION_SAVE_FAILED");
       }
-      return Response.json({ ...verification, verified: false, xpAwarded: 0, enemyDamage: 0 });
+      return Response.json({ ...verification, verified: false, xpAwarded: 0, enemyDamage: 0, aiReceipt });
     }
 
     const { data: completionData, error: completionError } = await admin.rpc("complete_quest", {
@@ -188,7 +276,7 @@ export async function POST(request: Request, context: { params: Promise<{ questI
       }
     }
 
-    return Response.json({ ...verification, ...completion, adaptiveQuestCreated });
+    return Response.json({ ...verification, ...completion, adaptiveQuestCreated, aiReceipt });
   } catch (error) {
     return errorResponse(error);
   }

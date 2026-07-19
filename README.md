@@ -24,7 +24,11 @@ Implemented and covered by automated tests:
 - Atomic, idempotent campaign-and-quest persistence through a service-role-only PostgreSQL RPC.
 - User-owned campaign dashboard, quest log, XP/level progress, enemy health, and completion history.
 - Private proof upload with size, MIME, and file-signature checks.
-- GPT-5.6 visual proof verification with high-detail image input and structured requirement assessments.
+- Image moderation before GPT-5.6 visual proof verification, with high-detail input and structured requirement assessments.
+- Explainable accepted/rejected verdicts with a privacy-safe mode, model, latency, safety, schema, and trace receipt.
+- Server-mediated OpenAI Realtime quest narration with no browser-exposed API key; the seeded demo uses clearly labelled device speech instead.
+- Judge-friendly demo controls for deterministic passing/rejected samples and one-click progress reset.
+- A private-image JSONL evaluation harness reporting accuracy, false accepts, false rejects, safety outcomes, and latency.
 - Service-role-only, row-locking progression RPC that completes a quest and awards XP/damage once.
 - Optional adaptive quest generation after progression commits; failure cannot roll back the victory.
 - Responsive dark-fantasy UI, keyboard focus states, semantic structure, and reduced-motion support.
@@ -79,6 +83,8 @@ On Windows systems that block PowerShell scripts, use `npm.cmd` in place of `npm
 | `SUPABASE_SERVICE_ROLE_KEY` | Live path | Server-only key used for controlled campaign/submission writes and service-only RPCs. Never expose it to browser code. |
 | `OPENAI_API_KEY` | Live path | Server-only OpenAI key. Never expose it to browser code. |
 | `OPENAI_MODEL` | Live path | Defaults to `gpt-5.6`; the alias routes to GPT-5.6 Sol. |
+| `OPENAI_MODERATION_MODEL` | Live path | Defaults to `omni-moderation-latest` for proof-image safety screening. |
+| `OPENAI_REALTIME_MODEL` | Live voice | Defaults to `gpt-realtime-2.1` for quest narration. |
 | `DEMO_MODE_ENABLED` | Demo only | Demo is available only when the value is exactly `true`. Set `false` or omit it to disable the seeded fallback. |
 | `DEMO_USER_EMAIL` | Optional | Reserved for a separately managed demo account; the seeded cookie demo does not expose or require it. |
 | `DEMO_USER_PASSWORD` | Optional | Reserved server-side for a separately managed demo account; the seeded cookie demo does not expose or require it. |
@@ -125,8 +131,11 @@ Manual Supabase checks:
 The live path uses the official JavaScript SDK and the Responses API:
 
 - Campaign generation: text input → Zod-validated campaign and quest structure.
-- Proof verification: task requirements plus a private image data URL → Zod-validated verdict and per-requirement assessment.
+- Proof verification: proof-image moderation, then task requirements plus a private image data URL → Zod-validated verdict and per-requirement assessment.
 - Adaptive quest: non-critical follow-up generation after progression commits.
+- Quest narration: browser WebRTC offer → server-authorized Realtime session; no microphone or browser API key is required.
+
+Each proof result includes a non-sensitive receipt with the application trace ID, live/demo mode, model, end-to-end latency, safety outcome, and schema-validation state. Proof bytes, data URLs, and model explanations are not written to telemetry.
 
 The configured default is `gpt-5.6`. Current official guidance confirms the `gpt-5.6` alias routes to GPT-5.6 Sol, the Responses API supports text and image input, and JavaScript Structured Outputs support `responses.parse` with `zodTextFormat`.
 
@@ -150,6 +159,7 @@ npm run build
 - Valid and malformed mocked OpenAI responses
 - Campaign generation authorization and persistence failures
 - Accepted, rejected, low-confidence, unauthorized, duplicate, and progression-failure verification paths
+- Moderation-gate, demo rejected-sample, demo-reset, and Realtime session boundaries
 - Service-role-only SQL mutation contracts
 - Seeded goal → campaign → quest → proof → verification → refresh progression flow
 
@@ -167,11 +177,32 @@ The seeded demo:
 - Uses a guarded demo verification result so a presentation does not depend on external services.
 - Stores demo progress in an HTTP-only cookie for eight hours.
 - Labels the campaign and verification response as demo behavior.
+- Can load deterministic passing and rejected proof images generated only in the browser for judge demonstrations.
+- Offers a one-click reset that clears only the HTTP-only demo progress cookie.
+- Labels browser speech as a device-voice demo instead of presenting it as OpenAI Realtime.
 - Does not call OpenAI or claim the fallback is real AI.
 
 For a live AI demo, configure Supabase and OpenAI, sign in with a real test account, and disable demo mode.
 
 See `DEMO_SCRIPT.md` for the sub-three-minute presentation flow.
+
+## Proof verification evals
+
+The repository includes an eight-case JSONL manifest covering clear acceptance, cropped output, unrelated evidence, unreadable evidence, partial requirements, and fabricated-looking evidence. It intentionally includes no proof files.
+
+Validate the manifest and see which private files must be supplied:
+
+```bash
+npm run eval:proof:validate
+```
+
+After adding sanitized private images under the Git-ignored `evals/proofs/` directory and configuring `OPENAI_API_KEY`, run:
+
+```bash
+npm run eval:proof -- --output evals/reports/proof-verification.json
+```
+
+The live runner applies the same moderation, Structured Output, confidence, and all-requirements gates as the application. Generated reports and proof images are ignored by Git. No evaluation score is claimed until the private image set is supplied and the live command completes.
 
 ## Vercel deployment
 
@@ -200,6 +231,7 @@ See `DEMO_SCRIPT.md` for the sub-three-minute presentation flow.
 ## Known limitations
 
 - Live OpenAI, Supabase, storage, RLS, and Vercel deployment were not exercised in this credential-free recovery workspace.
+- The proof eval manifest validates locally, but its private images and live model scores are deliberately absent from the repository.
 - The seeded demo persists in an HTTP-only cookie, not Supabase, and is intentionally not presented as AI verification.
 - Uploaded proof files do not yet have an automated retention/cleanup job; users can delete objects allowed by the existing private storage policy.
 - Adaptive quest generation is best-effort and intentionally cannot block or undo progression.

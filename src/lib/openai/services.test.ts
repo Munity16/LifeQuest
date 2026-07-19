@@ -1,14 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AppError } from "@/lib/errors";
 import { getOpenAIClient } from "@/lib/openai/client";
-import { generateCampaignWithAI, verifyProofWithAI } from "@/lib/openai/services";
+import { generateCampaignWithAI, moderateProofImage, verifyProofWithAI } from "@/lib/openai/services";
 
 vi.mock("@/lib/openai/client", () => ({
   getOpenAIClient: vi.fn(),
   getOpenAIModel: vi.fn(() => "gpt-5.6"),
+  getOpenAIModerationModel: vi.fn(() => "omni-moderation-latest"),
 }));
 
 const parse = vi.fn();
+const moderate = vi.fn();
 const validCampaign = {
   campaignName: "The Python Citadel",
   heroName: "Code Apprentice",
@@ -32,7 +34,8 @@ const validCampaign = {
 
 beforeEach(() => {
   parse.mockReset();
-  vi.mocked(getOpenAIClient).mockReturnValue({ responses: { parse } } as never);
+  moderate.mockReset();
+  vi.mocked(getOpenAIClient).mockReturnValue({ responses: { parse }, moderations: { create: moderate } } as never);
 });
 
 describe("OpenAI campaign generation", () => {
@@ -66,5 +69,26 @@ describe("OpenAI proof verification", () => {
     parse.mockResolvedValue({ output_parsed: { verified: true, confidence: 0.9, reason: "Accepted despite missing output.", requirementsAssessment: [{ requirement: input.quest.successRequirements[0], satisfied: false, explanation: "The output is not visible." }] } });
     await expect(verifyProofWithAI(input)).rejects.toMatchObject({ code: "AI_VERIFICATION_FAILED" });
     expect(parse).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("OpenAI proof moderation", () => {
+  it("returns flagged categories without exposing image content", async () => {
+    moderate.mockResolvedValueOnce({
+      id: "modr_123",
+      model: "omni-moderation-latest",
+      results: [{ flagged: true, categories: { violence: true, harassment: false } }],
+    });
+    await expect(moderateProofImage("data:image/png;base64,iVBORw0KGgo=")).resolves.toEqual({
+      flagged: true,
+      categories: ["violence"],
+      requestId: "modr_123",
+      model: "omni-moderation-latest",
+    });
+  });
+
+  it("fails closed when safety screening is unavailable", async () => {
+    moderate.mockRejectedValueOnce(new Error("network unavailable"));
+    await expect(moderateProofImage("data:image/png;base64,iVBORw0KGgo=")).rejects.toMatchObject({ code: "AI_MODERATION_FAILED" });
   });
 });

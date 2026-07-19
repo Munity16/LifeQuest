@@ -4,6 +4,7 @@ import { POST } from "@/app/api/quests/[questId]/verify/route";
 const mocks = vi.hoisted(() => ({
   getAuthContext: vi.fn(),
   getDemoCompletedQuestIds: vi.fn(),
+  moderateProofImage: vi.fn(),
   verifyProofWithAI: vi.fn(),
   generateAdaptiveQuestWithAI: vi.fn(),
   createSupabaseAdminClient: vi.fn(),
@@ -17,6 +18,7 @@ vi.mock("@/lib/demo-session", () => ({
   encodeDemoProgress: (ids: string[]) => encodeURIComponent(JSON.stringify(ids)),
 }));
 vi.mock("@/lib/openai/services", () => ({
+  moderateProofImage: mocks.moderateProofImage,
   verifyProofWithAI: mocks.verifyProofWithAI,
   generateAdaptiveQuestWithAI: mocks.generateAdaptiveQuestWithAI,
 }));
@@ -29,8 +31,8 @@ const questId = "00000000-0000-4000-8000-000000000101";
 const submissionId = "33333333-3333-4333-8333-333333333333";
 const userId = "44444444-4444-4444-8444-444444444444";
 
-function request(id = submissionId) {
-  return new Request(`http://localhost/api/quests/${questId}/verify`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ submissionId: id }) });
+function request(id = submissionId, demoOutcome?: "accepted" | "rejected") {
+  return new Request(`http://localhost/api/quests/${questId}/verify`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ submissionId: id, demoOutcome }) });
 }
 
 function createDatabaseFakes({ rpcData, rpcError = null, rejectionError = null }: { rpcData?: unknown; rpcError?: unknown; rejectionError?: unknown } = {}) {
@@ -64,9 +66,11 @@ function createDatabaseFakes({ rpcData, rpcError = null, rejectionError = null }
 }
 
 beforeEach(() => {
+  vi.clearAllMocks();
   process.env.DEMO_MODE_ENABLED = "true";
   mocks.getAuthContext.mockResolvedValue({ kind: "user", user: { id: userId } });
   mocks.getDemoCompletedQuestIds.mockResolvedValue([]);
+  mocks.moderateProofImage.mockResolvedValue({ flagged: false, categories: [], requestId: "modr_safe", model: "omni-moderation-latest" });
   mocks.generateAdaptiveQuestWithAI.mockResolvedValue(null);
   mocks.getCampaign.mockResolvedValue(null);
 });
@@ -85,6 +89,16 @@ describe("POST /api/quests/:questId/verify", () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toMatchObject({ verified: false, xpAwarded: 0, enemyDamage: 0 });
     expect(rejectionQuery.update).toHaveBeenCalled();
+    expect(admin.rpc).not.toHaveBeenCalled();
+  });
+
+  it("stops flagged proof at the safety gate without calling verification", async () => {
+    const { admin } = createDatabaseFakes();
+    mocks.moderateProofImage.mockResolvedValueOnce({ flagged: true, categories: ["violence"], requestId: "modr_flagged", model: "omni-moderation-latest" });
+    const response = await POST(request(), { params: Promise.resolve({ questId }) });
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({ verified: false, xpAwarded: 0, aiReceipt: { safety: "flagged", schemaValidated: false } });
+    expect(mocks.verifyProofWithAI).not.toHaveBeenCalled();
     expect(admin.rpc).not.toHaveBeenCalled();
   });
 
@@ -112,6 +126,21 @@ describe("POST /api/quests/:questId/verify", () => {
     const response = await POST(request(questId), { params: Promise.resolve({ questId }) });
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toMatchObject({ verified: true, duplicate: true, xpAwarded: 0, enemyDamage: 0, demoFallback: true });
+  });
+
+  it("demonstrates a rejected sample without changing demo progress", async () => {
+    mocks.getAuthContext.mockResolvedValueOnce({ kind: "demo", email: "hero@lifequest.demo" });
+    const response = await POST(request(questId, "rejected"), { params: Promise.resolve({ questId }) });
+    expect(response.status).toBe(200);
+    const payload = await response.json();
+    expect(payload).toMatchObject({
+      verified: false,
+      xpAwarded: 0,
+      enemyDamage: 0,
+      aiReceipt: { mode: "demo", safety: "simulated" },
+    });
+    expect(payload.requirementsAssessment).not.toHaveLength(0);
+    expect(payload.requirementsAssessment.every((item: { satisfied: boolean }) => !item.satisfied)).toBe(true);
   });
 
   it("reports progression persistence failure safely", async () => {

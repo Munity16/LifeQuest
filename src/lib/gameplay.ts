@@ -25,3 +25,12 @@ export function calculateCampaignProgress(completed: number, total: number) {
 export function canAwardQuest(status: string, previousAward: number) {
   return status !== "completed" && previousAward === 0;
 }
+
+export function getHeroRank(level: number, startingTitle = "Code Apprentice") {
+  const safeLevel = Math.max(1, Math.floor(level));
+  if (safeLevel === 1) return startingTitle;
+  if (safeLevel === 2) return "Rune Initiate";
+  if (safeLevel === 3) return "Quest Adept";
+  if (safeLevel === 4) return "Campaign Knight";
+  return "Realm Champion";
+}

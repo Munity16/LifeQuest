@@ -22,10 +22,10 @@ export function QuestCard({ quest }: { quest: QuestView }) {
         <span><Swords size={14} /> {quest.enemyDamage} DMG</span>
       </div>
       {locked ? (
-        <span className="quest-link-disabled">Complete an available quest to unlock</span>
+        <span className="quest-link-disabled">Complete a ready quest to unlock</span>
       ) : (
         <Link className="quest-link" href={`/campaign/${quest.campaignId}/quest/${quest.id}`}>
-          {quest.status === "completed" ? "View victory" : "Open quest"} <ArrowUpRight size={16} />
+          {quest.status === "completed" ? "Read chronicle" : "Accept quest"} <ArrowUpRight size={16} />
         </Link>
       )}
     </article>

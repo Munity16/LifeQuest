@@ -10,7 +10,7 @@ import {
   type ProofVerification,
 } from "@/lib/schemas";
 import { AppError } from "@/lib/errors";
-import { getOpenAIClient, getOpenAIModel } from "@/lib/openai/client";
+import { getOpenAIClient, getOpenAIModerationModel, getOpenAIModel } from "@/lib/openai/client";
 import {
   ADAPTIVE_SYSTEM_PROMPT,
   CAMPAIGN_SYSTEM_PROMPT,
@@ -49,6 +49,32 @@ export async function generateCampaignWithAI(input: OnboardingInput): Promise<Ge
 interface VerifyProofInput {
   quest: Pick<QuestView, "title" | "description" | "successRequirements">;
   imageDataUrl: string;
+}
+
+export interface ProofModerationResult {
+  flagged: boolean;
+  categories: string[];
+  requestId: string;
+  model: string;
+}
+
+export async function moderateProofImage(imageDataUrl: string): Promise<ProofModerationResult> {
+  const openai = getOpenAIClient();
+  try {
+    const response = await openai.moderations.create({
+      model: getOpenAIModerationModel(),
+      input: [{ type: "image_url", image_url: { url: imageDataUrl } }],
+    });
+    const result = response.results[0];
+    if (!result) throw new Error("Moderation returned no result.");
+    const categories = Object.entries(result.categories)
+      .filter(([, flagged]) => flagged)
+      .map(([category]) => category);
+    return { flagged: result.flagged, categories, requestId: response.id, model: response.model };
+  } catch (error) {
+    console.error("Proof safety screening failed", error);
+    throw new AppError("Proof safety screening is temporarily unavailable. Your image is saved; please retry.", 502, "AI_MODERATION_FAILED");
+  }
 }
 
 export async function verifyProofWithAI(input: VerifyProofInput): Promise<ProofVerification> {

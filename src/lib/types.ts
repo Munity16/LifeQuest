@@ -2,6 +2,21 @@ export type QuestStatus = "locked" | "available" | "in_progress" | "completed";
 export type CampaignStatus = "active" | "won" | "archived";
 export type Difficulty = "gentle" | "balanced" | "challenging";
 
+export interface RequirementAssessment {
+  requirement: string;
+  satisfied: boolean;
+  explanation: string;
+}
+
+export interface AIReceipt {
+  traceId: string;
+  mode: "live" | "demo";
+  model: string;
+  latencyMs: number;
+  safety: "passed" | "flagged" | "simulated";
+  schemaValidated: boolean;
+}
+
 export interface QuestView {
   id: string;
   campaignId: string;
@@ -53,4 +68,6 @@ export interface CompletionResult {
   enemyCurrentHealth: number;
   levelledUp: boolean;
   adaptiveQuestCreated: boolean;
+  requirementsAssessment: RequirementAssessment[];
+  aiReceipt?: AIReceipt;
 }

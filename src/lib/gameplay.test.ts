@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calculateCampaignProgress, calculateEnemyHealth, calculateLevel, calculateLevelProgress, canAwardQuest } from "@/lib/gameplay";
+import { calculateCampaignProgress, calculateEnemyHealth, calculateLevel, calculateLevelProgress, canAwardQuest, getHeroRank } from "@/lib/gameplay";
 
 describe("gameplay calculations", () => {
   it.each([
@@ -32,5 +32,15 @@ describe("gameplay calculations", () => {
     expect(canAwardQuest("available", 0)).toBe(true);
     expect(canAwardQuest("completed", 0)).toBe(false);
     expect(canAwardQuest("available", 20)).toBe(false);
+  });
+
+  it.each([
+    [1, "Code Apprentice"],
+    [2, "Rune Initiate"],
+    [3, "Quest Adept"],
+    [4, "Campaign Knight"],
+    [8, "Realm Champion"],
+  ])("assigns the level %i hero rank", (level, rank) => {
+    expect(getHeroRank(level)).toBe(rank);
   });
 });

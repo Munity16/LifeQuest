@@ -106,6 +106,7 @@ export const authSchema = z.object({
 
 export const verificationRequestSchema = z.object({
   submissionId: z.uuid(),
+  demoOutcome: z.enum(["accepted", "rejected"]).optional(),
 });
 
 export const generationKeySchema = z.uuid("A valid campaign generation key is required.");
