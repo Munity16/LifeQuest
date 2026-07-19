@@ -2,7 +2,7 @@ import Link from "next/link";
 import { AlertTriangle, Inbox, LoaderCircle } from "lucide-react";
 
 export function LoadingQuestCard() {
-  return <div className="quest-card loading-card"><span /><span /><span /></div>;
+  return <div className="quest-card loading-card" role="status" aria-label="Loading quest"><span aria-hidden="true" /><span aria-hidden="true" /><span aria-hidden="true" /></div>;
 }
 
 export function EmptyState({ title, message, actionHref, actionLabel }: { title: string; message: string; actionHref?: string; actionLabel?: string }) {
@@ -16,7 +16,7 @@ export function EmptyState({ title, message, actionHref, actionLabel }: { title:
 }
 
 export function ErrorState({ title = "The path is obscured", message }: { title?: string; message: string }) {
-  return <div className="state-card state-error"><AlertTriangle size={27} /><h2>{title}</h2><p>{message}</p></div>;
+  return <div className="state-card state-error" role="alert"><AlertTriangle size={27} /><h2>{title}</h2><p>{message}</p></div>;
 }
 
 export function InlineLoader({ label = "Working..." }: { label?: string }) {
