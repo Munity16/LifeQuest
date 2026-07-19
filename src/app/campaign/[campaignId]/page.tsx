@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { Flag, MapPinned, Sparkles } from "lucide-react";
+import { MapPinned, ScrollText, Sparkles } from "lucide-react";
 import { AppHeader } from "@/components/app-header";
 import { CampaignHud } from "@/components/campaign-hud";
 import { CampaignHero } from "@/components/campaign-hero";
@@ -36,16 +36,22 @@ export default async function CampaignPage({ params }: { params: Promise<{ campa
       <CampaignHud campaign={campaign} />
       <main id="main-content" className="page-shell campaign-page">
         {campaign.isDemo && <div className="demo-banner"><Sparkles size={16} /><span><strong>Seeded demo</strong> · Campaign generation and verification are simulated, never presented as live AI.</span><DemoResetButton /><Link href="/onboarding">New game</Link></div>}
-        <CampaignHero campaign={campaign} />
+        <QuestFocusBoard
+          readyQuests={readyQuests}
+          completedCount={coreQuests.filter((quest) => quest.status === "completed").length}
+          totalCount={coreQuests.length}
+          progress={progress}
+        />
 
-        <section className="campaign-progress-card" aria-label={`Campaign ${progress}% complete`}>
-          <div><span><Flag size={16} /> Campaign progress</span><strong>{coreQuests.filter((quest) => quest.status === "completed").length} of {coreQuests.length} core quests complete</strong></div>
-          <div className="progress-track campaign-progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}><span style={{ width: `${progress}%` }} /></div>
+        <section className="campaign-briefing-section" aria-labelledby="campaign-briefing-title">
+          <div className="section-title-row campaign-briefing-heading">
+            <div><span className="eyebrow"><ScrollText size={15} /> Campaign briefing</span><h2 id="campaign-briefing-title">Know the realm and your rival</h2></div>
+            <small>Optional lore</small>
+          </div>
+          <CampaignHero campaign={campaign} />
         </section>
 
-        <QuestFocusBoard readyQuests={readyQuests} completedCount={coreQuests.filter((quest) => quest.status === "completed").length} totalCount={coreQuests.length} />
-
-        <section className="quest-section" aria-labelledby="quest-title">
+        <section className="quest-section" id="adventure-map" aria-labelledby="quest-title">
           <div className="section-title-row"><div><span className="eyebrow"><MapPinned size={15} /> Adventure map</span><h2 id="quest-title">Follow the path to victory</h2></div><small>{readyQuests.length} quests ready</small></div>
           {coreQuests.length ? <QuestMap quests={coreQuests} /> : <EmptyState title="The campaign is won" message="Every quest on this path is complete. Your progress is safely recorded." actionHref="/onboarding" actionLabel="Forge another campaign" />}
         </section>

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Crown, Shield, Sparkles, Swords, Zap } from "lucide-react";
+import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { VerificationDetails } from "@/components/verification-details";
 import { useAppearance } from "@/components/appearance-provider";
@@ -14,14 +15,42 @@ export function CompletionCelebration({ result, onContinue }: { result: Completi
   const reduceMotion = useReducedMotion();
   const { preferences } = useAppearance();
   const rank = resolveHeroTitle(preferences.heroTitle, result.currentLevel);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const continueRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    continueRef.current?.focus();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onContinue();
+        return;
+      }
+      if (event.key !== "Tab" || !dialogRef.current) return;
+      const focusable = Array.from(dialogRef.current.querySelectorAll<HTMLElement>("button, a[href], summary, [tabindex]:not([tabindex='-1'])"));
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (!first || !last) return;
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onContinue]);
+
   return (
-    <motion.div className="celebration-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} role="dialog" aria-modal="true" aria-labelledby="victory-title">
-      <motion.div className="celebration-card" initial={reduceMotion ? undefined : { opacity: 0, y: 28, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ type: "spring", damping: 22 }}>
+    <motion.div className="celebration-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} role="dialog" aria-modal="true" aria-labelledby="victory-title" aria-describedby="victory-description">
+      <motion.div ref={dialogRef} className="celebration-card" initial={reduceMotion ? undefined : { opacity: 0, y: 28, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ type: "spring", damping: 22 }}>
         <div className="victory-confetti" aria-hidden="true">{Array.from({ length: 12 }, (_, index) => <i key={index} />)}</div>
         <div className="celebration-burst" aria-hidden="true"><Sparkles size={34} /></div>
         <span className="eyebrow">Quest complete</span>
         <h2 id="victory-title">Victory is yours.</h2>
-        <p>{result.reason}</p>
+        <p id="victory-description">{result.reason}</p>
         <VerificationDetails result={result} collapsible />
         <div className="victory-combat-stage" aria-label={`${rank} dealt ${result.enemyDamage} damage to the enemy`}>
           <motion.figure initial={reduceMotion ? undefined : { x: -18, opacity: 0 }} animate={{ x: 0, opacity: 1 }}>
@@ -45,7 +74,7 @@ export function CompletionCelebration({ result, onContinue }: { result: Completi
         </div>
         {result.levelledUp && <div className="level-up"><Crown size={16} /> Level up! New title: {rank}.</div>}
         {result.adaptiveQuestCreated && <div className="adaptive-note"><Sparkles size={15} /> New path unlocked: an adaptive quest has appeared.</div>}
-        <Button onClick={onContinue}>Continue adventure <ArrowRight size={17} /></Button>
+        <Button ref={continueRef} onClick={onContinue}>Continue adventure <ArrowRight size={17} /></Button>
       </motion.div>
     </motion.div>
   );

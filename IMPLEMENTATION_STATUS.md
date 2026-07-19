@@ -6,7 +6,7 @@ Last updated: 2026-07-19
 
 - **Framework and versions:** Next.js 16.2.10 App Router, React 19.2.7, strict TypeScript 5.9.3, Tailwind CSS 4.3.3, Supabase JS 2.110.7, OpenAI JS 6.48.0, Zod 4.4.3, and Vitest 4.1.10.
 - **Package manager:** npm with `package-lock.json` lockfile version 3. The Windows host requires `npm.cmd` because its PowerShell policy blocks `npm.ps1`.
-- **Current branch:** `codex/production-hardening`, based on `origin/main`; the README visual work remains isolated in its separate pull request.
+- **Current branch:** `codex/ui-ux-main`, based directly on the latest verified `origin/main` for the final UI/UX pull request.
 - **Existing pages:** landing, login, signup, onboarding, campaign dashboard, quest detail/proof, profile, global loading, not-found, and error states.
 - **Existing API routes:** login, signup, logout, Supabase auth callback, demo start/reset, campaign generation, campaign lookup, profile progress/preferences, proof upload, proof verification/progression, and server-mediated Realtime narration.
 - **Existing database tables:** `profiles`, `campaigns`, `quests`, `quest_submissions`, and `progress_events` across three ordered migrations.
@@ -50,6 +50,9 @@ Development stopped after backend, migration, demo-data, and reusable-component 
 - `VERIFIED` Explicit `DEMO_MODE_ENABLED=true` gate with labelled seeded campaign and cookie-backed progress.
 - `VERIFIED` Onboarding choices and cross-field Zod validation with loading, retry, and duplicate-submit protection.
 - `VERIFIED` Onboarding fieldsets use stable in-panel step headers instead of multi-line legends, with compact controls and overflow-free responsive layouts at 928px and 320px.
+- `VERIFIED` Onboarding now includes a sticky four-step orientation rail, a live campaign-preview loadout, and a compact 49px mobile forge action that remains reachable above the adventure dock.
+- `VERIFIED` Campaign pages lead with one recommended next action, integrate campaign progress into the quest board, move optional lore behind a disclosure, and provide one persistent mobile current-quest action.
+- `VERIFIED` Completion feedback now moves focus into the victory dialog, traps keyboard focus, supports Escape, and exposes a complete accessible description.
 - `VERIFIED` GPT-5.6 Responses API integration using `responses.parse`, `zodTextFormat`, bounded retries, and schema validation. Official current documentation confirms this API shape; live calls remain untested without a key.
 - `VERIFIED` Generated quest sequence, reward-band, daily-time, and success-requirement validation.
 - `VERIFIED` Atomic/idempotent service-role-only campaign-and-quest creation RPC.
@@ -110,6 +113,17 @@ Development stopped after backend, migration, demo-data, and reusable-component 
 - `npm.cmd run build`: `VERIFIED`, the production build includes the protected proof-retention cron route and all expected application routes.
 - GitHub Actions: `VERIFIED` repository workflow definitions cover the strict quality gate and Chromium golden path; remote execution awaits the branch push.
 - Live Vercel/Supabase/OpenAI verification: `BLOCKED`, because this workspace has no production project binding or live credentials.
+
+## 9+ UI/UX polish verification - 2026-07-19
+
+- `npm.cmd run lint`: `VERIFIED`, exit 0 with no warnings.
+- `npm.cmd run typecheck`: `VERIFIED`, strict TypeScript passes.
+- `npm.cmd run test`: `VERIFIED`, 15 files and 68 tests pass.
+- `npm.cmd run test:e2e`: `VERIFIED`, the seeded golden path and 320px campaign/quest checks pass; the credential-gated live test is correctly skipped.
+- `npm.cmd run build`: `VERIFIED`, the optimized Next.js production build succeeds with all expected routes.
+- In-app browser: `VERIFIED`, onboarding and campaign views fit at 320px without horizontal overflow; four onboarding steps remain visible; the mobile forge action is 49px high; the mobile quest action is 55px high; and only one primary quest action is visible at that breakpoint.
+- Interaction accessibility: `VERIFIED`, loading/error announcements are semantic and the victory dialog provides initial focus, a focus trap, Escape handling, and an associated description.
+- Live Supabase/OpenAI/Vercel behavior: `BLOCKED`, external credentials and target projects are not present, so no live integration result is claimed.
 
 ## Verification log
 
