@@ -2,7 +2,7 @@
 
 ## Product boundary
 
-- Build only the LifeQuest hackathon MVP described in the repository README and implementation tracker.
+- Build only the focused LifeQuest product MVP described in the repository README and implementation tracker.
 - Protect the golden path: goal onboarding -> campaign -> quest -> proof -> verification -> progression.
 - Keep the application as one Next.js App Router project deployable to Vercel.
 - Do not add social, payments, native apps, integrations, marketplaces, or other out-of-scope features.
