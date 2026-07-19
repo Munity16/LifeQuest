@@ -4,15 +4,20 @@ import { getAuthContext } from "@/lib/auth";
 import { getQuest } from "@/lib/data";
 import { AppError, errorResponse } from "@/lib/errors";
 import { getOpenAIRealtimeModel } from "@/lib/openai/client";
+import { enforceRateLimit } from "@/lib/rate-limit";
+import { operationalErrorCode, operationalStatus, recordOperationalEvent } from "@/lib/telemetry";
 
 const MAX_SDP_BYTES = 200_000;
 const narrationQuerySchema = z.object({ campaignId: z.uuid(), questId: z.uuid() });
 
 export async function POST(request: Request) {
+  const startedAt = performance.now();
+  const traceId = crypto.randomUUID();
   try {
     const auth = await getAuthContext();
     if (auth.kind === "anonymous") throw new AppError("Sign in to use quest narration.", 401, "UNAUTHORIZED");
     if (auth.kind === "demo") throw new AppError("Live narration is unavailable in the seeded demo. Use the labelled device voice instead.", 403, "DEMO_VOICE_ONLY");
+    await enforceRateLimit(request, { action: "narration.connect", limit: 10, windowSeconds: 10 * 60, subject: auth.user.id });
     const url = new URL(request.url);
     const { campaignId, questId } = narrationQuerySchema.parse({ campaignId: url.searchParams.get("campaignId"), questId: url.searchParams.get("questId") });
     const result = await getQuest(campaignId, questId);
@@ -51,11 +56,13 @@ export async function POST(request: Request) {
       throw new AppError("Quest narration could not connect. Please try again.", 502, "REALTIME_CONNECTION_FAILED");
     }
 
+    await recordOperationalEvent({ eventName: "narration.connect", traceId, status: "success", latencyMs: Math.round(performance.now() - startedAt), model: getOpenAIRealtimeModel() });
     return new Response(await upstream.text(), {
       status: 200,
       headers: { "Content-Type": "application/sdp", "Cache-Control": "no-store" },
     });
   } catch (error) {
+    await recordOperationalEvent({ eventName: "narration.connect", traceId, status: operationalStatus(error), latencyMs: Math.round(performance.now() - startedAt), errorCode: operationalErrorCode(error), model: getOpenAIRealtimeModel() });
     return errorResponse(error);
   }
 }

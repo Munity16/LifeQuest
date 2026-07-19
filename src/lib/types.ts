@@ -57,6 +57,7 @@ export interface CampaignView {
 }
 
 export interface CompletionResult {
+  submissionId?: string;
   verified: boolean;
   duplicate?: boolean;
   reason: string;
@@ -70,4 +71,9 @@ export interface CompletionResult {
   adaptiveQuestCreated: boolean;
   requirementsAssessment: RequirementAssessment[];
   aiReceipt?: AIReceipt;
+}
+
+export interface ProofRetentionSummary {
+  submissionId: string;
+  deletedAt: string | null;
 }

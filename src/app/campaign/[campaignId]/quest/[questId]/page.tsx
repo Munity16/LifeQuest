@@ -50,7 +50,7 @@ export default async function QuestPage({ params }: { params: Promise<{ campaign
           <aside className="proof-panel" aria-labelledby="proof-title">
             <div className="proof-panel-heading"><span className="proof-icon"><ImageUp size={21} /></span><div><small>Final encounter</small><h2 id="proof-title">Present proof</h2></div></div>
             <p>Use one clear screenshot or photo that visibly demonstrates the requirements. Do not include passwords, identity documents, or sensitive personal information.</p>
-            {locked ? <div className="locked-proof"><LockKeyhole size={21} /><strong>This quest is still locked</strong><p>Complete an available quest first. No proof can be submitted for a locked quest.</p></div> : <ProofUploader questId={quest.id} completed={quest.status === "completed"} isDemo={campaign.isDemo} />}
+            {locked ? <div className="locked-proof"><LockKeyhole size={21} /><strong>This quest is still locked</strong><p>Complete an available quest first. No proof can be submitted for a locked quest.</p></div> : <ProofUploader questId={quest.id} completed={quest.status === "completed"} isDemo={campaign.isDemo} existingProof={result.latestProof} />}
           </aside>
         </div>
       </main>

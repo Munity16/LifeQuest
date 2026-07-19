@@ -17,6 +17,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <html
       lang="en"
+      data-scroll-behavior="smooth"
       data-theme={preferences.theme}
       data-accent={preferences.accent}
       data-crest={preferences.crest}

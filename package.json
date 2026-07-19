@@ -14,6 +14,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "validate:production": "node scripts/check-production-env.mjs",
     "eval:proof": "node scripts/run-proof-evals.mjs",
     "eval:proof:validate": "node scripts/run-proof-evals.mjs --validate"
   },

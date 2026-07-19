@@ -3,13 +3,13 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { CircleCheck, CircleX, FileImage, ScanSearch, ShieldCheck, UploadCloud, X } from "lucide-react";
+import { CircleCheck, CircleX, FileImage, ScanSearch, ShieldCheck, Trash2, UploadCloud, X } from "lucide-react";
 import { CompletionCelebration } from "@/components/completion-celebration";
 import { InlineLoader } from "@/components/states";
 import { Button } from "@/components/ui/button";
 import { VerificationResult } from "@/components/verification-result";
 import { ACCEPTED_IMAGE_TYPES, MAX_PROOF_BYTES } from "@/lib/config";
-import type { CompletionResult } from "@/lib/types";
+import type { CompletionResult, ProofRetentionSummary } from "@/lib/types";
 
 type UploadState = "idle" | "uploading" | "verifying" | "accepted" | "rejected";
 
@@ -46,6 +46,7 @@ function parseResult(payload: unknown): CompletionResult | null {
     }
     : undefined;
   return {
+    submissionId: typeof value.submissionId === "string" ? value.submissionId : undefined,
     verified: typeof value.verified === "boolean" ? value.verified : false,
     duplicate: typeof value.duplicate === "boolean" ? value.duplicate : false,
     reason: typeof value.reason === "string" ? value.reason : "Verification finished.",
@@ -104,7 +105,7 @@ async function createDemoProof(outcome: "accepted" | "rejected") {
   return canvasToFile(canvas, `lifequest-demo-${outcome}.png`);
 }
 
-export function ProofUploader({ questId, completed, isDemo }: { questId: string; completed: boolean; isDemo: boolean }) {
+export function ProofUploader({ questId, completed, isDemo, existingProof }: { questId: string; completed: boolean; isDemo: boolean; existingProof: ProofRetentionSummary | null }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -114,6 +115,9 @@ export function ProofUploader({ questId, completed, isDemo }: { questId: string;
   const [error, setError] = useState<string | null>(null);
   const [showCelebration, setShowCelebration] = useState(false);
   const [demoOutcome, setDemoOutcome] = useState<"accepted" | "rejected" | null>(null);
+  const [proofDeletedAt, setProofDeletedAt] = useState<string | null>(existingProof?.deletedAt ?? null);
+  const [deletingProof, setDeletingProof] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   useEffect(() => () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
 
@@ -123,6 +127,8 @@ export function ProofUploader({ questId, completed, isDemo }: { questId: string;
     setResult(null);
     setState("idle");
     setDemoOutcome(sampleOutcome);
+    if (selected) setProofDeletedAt(null);
+    if (!selected && inputRef.current) inputRef.current.value = "";
 
     if (selected && !ACCEPTED_IMAGE_TYPES.includes(selected.type as (typeof ACCEPTED_IMAGE_TYPES)[number])) {
       setFile(null);
@@ -176,6 +182,7 @@ export function ProofUploader({ questId, completed, isDemo }: { questId: string;
       if (!verificationResponse.ok) throw new Error(payloadMessage(verificationPayload));
       const parsed = parseResult(verificationPayload);
       if (!parsed) throw new Error("The verification response was incomplete.");
+      setProofDeletedAt(null);
       setResult(parsed);
       setState(parsed.verified ? "accepted" : "rejected");
       if (parsed.verified && !parsed.duplicate) setShowCelebration(true);
@@ -186,8 +193,63 @@ export function ProofUploader({ questId, completed, isDemo }: { questId: string;
     }
   }
 
+  async function deleteStoredProof(submissionId: string) {
+    setDeletingProof(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/quests/${questId}/proof`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ submissionId }),
+      });
+      const payload: unknown = await response.json();
+      if (!response.ok) throw new Error(payloadMessage(payload));
+      const deletedAt = typeof payload === "object" && payload && "deletedAt" in payload && typeof payload.deletedAt === "string"
+        ? payload.deletedAt
+        : new Date().toISOString();
+      setProofDeletedAt(deletedAt);
+      setConfirmingDelete(false);
+      setFile(null);
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+      if (inputRef.current) inputRef.current.value = "";
+      router.refresh();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "The proof image could not be deleted.");
+    } finally {
+      setDeletingProof(false);
+    }
+  }
+
+  const retentionSubmissionId = result?.submissionId || existingProof?.submissionId;
+  const retentionControl = !isDemo && retentionSubmissionId ? (
+    <div className="proof-retention-control" role="status">
+      {proofDeletedAt ? (
+        <><ShieldCheck size={16} /><span>Proof image deleted. The privacy-safe verification receipt remains.</span></>
+      ) : (
+        <>
+          <span>Proof images expire automatically after the configured retention period.</span>
+          {confirmingDelete ? (
+            <div className="proof-delete-confirmation">
+              <strong>Delete this private proof permanently?</strong>
+              <span>Your verification receipt and earned progression will remain.</span>
+              <Button type="button" variant="danger" onClick={() => void deleteStoredProof(retentionSubmissionId)} disabled={deletingProof}>
+                <Trash2 size={15} /> {deletingProof ? "Deleting proof..." : "Confirm deletion"}
+              </Button>
+              <Button type="button" variant="ghost" onClick={() => setConfirmingDelete(false)} disabled={deletingProof}>Keep proof</Button>
+            </div>
+          ) : (
+            <Button type="button" variant="secondary" onClick={() => setConfirmingDelete(true)}>
+              <Trash2 size={15} /> Delete stored proof now
+            </Button>
+          )}
+        </>
+      )}
+    </div>
+  ) : null;
+
   if (completed && !result) {
-    return <VerificationResult verified reason="This quest is complete. Your reward has already been applied." />;
+    return <><VerificationResult verified reason="This quest is complete. Your reward has already been applied." />{retentionControl}</>;
   }
 
   return (
@@ -219,13 +281,14 @@ export function ProofUploader({ questId, completed, isDemo }: { questId: string;
       )}
 
       <div className="proof-privacy"><ShieldCheck size={15} /><span>Your private proof passes a safety check, then is evaluated only against this quest.</span></div>
+      {state === "idle" && !file && retentionControl}
       {error && <div className="form-error" role="alert" aria-live="polite">{error}</div>}
-      {state === "rejected" && result && <VerificationResult verified={false} reason={result.reason} result={result} onRetry={() => chooseFile(null)} />}
+      {state === "rejected" && result && <><VerificationResult verified={false} reason={result.reason} result={result} onRetry={() => chooseFile(null)} />{retentionControl}</>}
       <Button type="button" className="verify-button" onClick={submit} disabled={!file || state === "uploading" || state === "verifying"}>
         {state === "uploading" ? <InlineLoader label="Securing your proof..." /> : state === "verifying" ? <InlineLoader label="GPT-5.6 is reviewing..." /> : <><ScanSearch size={17} /> Submit for verification</>}
       </Button>
       {showCelebration && result && <CompletionCelebration result={result} onContinue={() => { setShowCelebration(false); router.refresh(); }} />}
-      {state === "accepted" && result && !showCelebration && <VerificationResult verified reason={result.reason} result={result} />}
+      {state === "accepted" && result && !showCelebration && <><VerificationResult verified reason={result.reason} result={result} />{retentionControl}</>}
     </div>
   );
 }

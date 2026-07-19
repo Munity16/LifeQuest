@@ -129,6 +129,10 @@ LifeQuest builds without live credentials. Configure `.env.local` for the live p
 | `DEMO_MODE_ENABLED` | Demo only | The seeded fallback exists only when this value is exactly `true`. |
 | `DEMO_USER_EMAIL` | Optional | Reserved for a separately managed demo account. |
 | `DEMO_USER_PASSWORD` | Optional | Reserved server-side for a separately managed demo account. |
+| `RATE_LIMIT_SALT` | Production | Server-only random value, at least 32 characters, used before hashing rate-limit identifiers. |
+| `CRON_SECRET` | Production | Server-only random value, at least 32 characters, protecting the retention cleanup route. |
+| `PROOF_RETENTION_DAYS` | Production | Number of days to retain proof objects; defaults to `30`. |
+| `TELEMETRY_ENABLED` | Optional | Set to `false` to disable privacy-safe operational event persistence. |
 
 Live endpoints return explicit configuration errors when their required server credentials are absent.
 
@@ -145,6 +149,8 @@ Apply the migrations in `supabase/migrations` in order:
    - Adds idempotent campaign creation and replaces progression with atomic, service-role-only database functions.
 3. `202607190003_profile_appearance.sql`
    - Adds validated JSON appearance preferences to the user's RLS-protected profile.
+4. `202607190004_production_hardening.sql`
+   - Adds proof-deletion receipts, hashed service-only API rate limits, and privacy-safe operational events.
 
 If the project is linked with the Supabase CLI:
 
@@ -159,6 +165,7 @@ Confirm before going live:
 - RLS is enabled on all public tables.
 - Users can read only their own records.
 - Only `service_role` can execute `create_campaign_with_quests` and `complete_quest`.
+- Only `service_role` can consume the database-backed API rate limiter or write operational events.
 - The proof bucket is private, limited to 5 MB JPG/PNG/WebP files, and scoped to `{userId}/{campaignId}/{questId}/{filename}`.
 - Local and production `/auth/callback` URLs are present in the Supabase redirect allowlist.
 
@@ -178,6 +185,13 @@ The live verification path uses the official OpenAI JavaScript SDK:
 6. Apply rewards through the idempotent service-role progression function.
 
 Receipts expose mode, model, latency, safety outcome, schema state, and application trace ID without logging proof bytes, data URLs, secrets, or private model reasoning.
+
+### Production protection and privacy
+
+- Authentication, generation, proof upload/verification/deletion, and narration routes enforce per-window limits. Production identifiers are salted and SHA-256 hashed before storage.
+- Operational events use an allowlisted schema containing event type, status, latency, error code, model, and numeric/boolean metadata only—never raw IPs, emails, user IDs, goals, prompts, or proof content.
+- Users can delete a stored proof immediately without removing the verification receipt or earned progression.
+- Vercel invokes the protected retention route daily; proof objects older than `PROOF_RETENTION_DAYS` are removed in bounded batches.
 
 ### Campaign generation
 
@@ -212,10 +226,11 @@ For a live demonstration, configure Supabase and OpenAI, sign in with a real tes
 npm run lint
 npm run typecheck
 npm run test
+npm run test:e2e
 npm run build
 ```
 
-The automated suite currently contains **64 passing tests** across schemas, authentication and Route Handler boundaries, gameplay calculations, customization, proof-file validation, mocked OpenAI responses, moderation, idempotent progression, SQL security contracts, and the seeded golden path.
+The automated suite currently contains **68 passing Vitest tests** plus Chromium coverage for the complete seeded golden path and 320px campaign/quest layouts. GitHub Actions runs the strict quality gate and browser suite on every pull request and push to `main`.
 
 ### Private proof evaluation
 
@@ -239,11 +254,14 @@ Proof images and generated reports remain ignored. No live evaluation score is c
 2. Keep the default build command: `npm run build`.
 3. Configure production environment variables without exposing server secrets through `NEXT_PUBLIC_` names.
 4. Set `NEXT_PUBLIC_APP_URL` to the final HTTPS origin.
-5. Apply all three Supabase migrations.
+5. Apply all four Supabase migrations.
 6. Add the production `/auth/callback` URL to the Supabase redirect allowlist.
 7. Confirm the storage bucket and RLS policies.
-8. Deploy and run the manual verification checklist below with a fresh test user.
-9. Disable demo mode for normal production use unless the visibly labelled fallback is intentional.
+8. Run `npm run validate:production` in the configured production environment.
+9. Deploy and run the manual verification checklist below with a fresh test user.
+10. Disable demo mode for normal production use unless the visibly labelled fallback is intentional.
+
+**Live URL:** not assigned in this repository yet; add the final Vercel HTTPS origin here and to the GitHub About section after the external project is created.
 
 <details>
 <summary><strong>Manual live verification checklist</strong></summary>
@@ -256,6 +274,8 @@ Proof images and generated reports remain ignored. No live evaluation score is c
 6. Verify the proof and confirm exactly one XP award, one health reduction, and one completion event.
 7. Retry the verification request and confirm progression does not change.
 8. Sign in as another user and confirm the first user's records and proof object remain inaccessible.
+9. Delete the stored proof and confirm the receipt and progression remain while the private object no longer downloads.
+10. Trigger the `Live readiness` GitHub workflow against staging and confirm authentication, generation, persistence, and refresh.
 
 </details>
 
@@ -264,17 +284,17 @@ Proof images and generated reports remain ignored. No live evaluation score is c
 - Live OpenAI, Supabase, storage, RLS, and Vercel behavior still require verification against the target services and credentials.
 - The private proof-evaluation image set and live model scores are intentionally absent from the repository.
 - Seeded demo progress uses HTTP-only cookies rather than Supabase.
-- Uploaded proofs do not yet have an automated retention or cleanup job.
+- The scheduled retention route is implemented but cannot run until a Vercel project, `CRON_SECRET`, and the fourth migration are configured.
 - Adaptive quest generation is best-effort and cannot block or undo progression.
 - Authentication currently supports Supabase email and password.
 - LifeQuest is a focused MVP, not a medical, financial, legal, or safety-critical task system.
 
 ## Roadmap
 
-- Add a retention policy and user-facing proof deletion flow.
-- Add privacy-safe production telemetry for latency, schema failures, and verification retries.
+- Deploy the configured Vercel/Supabase/OpenAI staging environment and record the live golden-path results.
+- Exercise the manual two-user RLS/storage isolation and accepted/rejected private proof pair.
 - Evaluate adaptive quest quality against representative goals before enabling it broadly.
-- Add a browser-level Supabase staging test with secure staging credentials.
+- Add the final deployment URL after the external Vercel project is assigned.
 
 ---
 

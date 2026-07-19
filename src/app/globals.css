@@ -344,6 +344,12 @@ input::placeholder, textarea::placeholder { color: #756d83; }
 .proof-preview > div span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .proof-privacy { display: flex; gap: 0.38rem; color: var(--mist-300); font-size: 0.65rem; }
 .proof-privacy svg { color: var(--green-400); margin-top: 0.1rem; }
+.proof-retention-control { display: grid; gap: 0.55rem; border: 1px solid var(--border); padding: 0.7rem; color: var(--mist-300); font-size: 0.68rem; background: rgba(8, 12, 16, 0.42); }
+.proof-retention-control > span { line-height: 1.5; }
+.proof-retention-control > svg { color: var(--green-400); }
+.proof-retention-control .button { width: 100%; }
+.proof-delete-confirmation { display: grid; gap: 0.45rem; }
+.proof-delete-confirmation strong { color: var(--theme-text, var(--mist-100)); font-family: Georgia, serif; }
 .verify-button { width: 100%; }
 .verification-result { display: grid; grid-template-columns: auto 1fr; gap: 0.6rem; border: 1px solid var(--border); border-radius: 0.65rem; padding: 0.75rem; font-size: 0.78rem; }
 .verification-result strong { font-family: Georgia,serif; }
