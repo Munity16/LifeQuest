@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calculateCampaignProgress, calculateEnemyHealth, calculateLevel, calculateLevelProgress, canAwardQuest, getHeroRank } from "@/lib/gameplay";
+import { calculateCampaignProgress, calculateEnemyHealth, calculateLevel, calculateLevelProgress, canAwardQuest, getHeroAchievements, getHeroRank } from "@/lib/gameplay";
 
 describe("gameplay calculations", () => {
   it.each([
@@ -42,5 +42,13 @@ describe("gameplay calculations", () => {
     [8, "Realm Champion"],
   ])("assigns the level %i hero rank", (level, rank) => {
     expect(getHeroRank(level)).toBe(rank);
+  });
+
+  it("unlocks achievements only from persisted progression signals", () => {
+    const fresh = getHeroAchievements({ totalXp: 0, level: 1, campaigns: 1, wonCampaigns: 0, woundedEnemies: 0 });
+    expect(fresh.filter((achievement) => achievement.unlocked).map((achievement) => achievement.id)).toEqual(["pathbound"]);
+
+    const veteran = getHeroAchievements({ totalXp: 240, level: 3, campaigns: 2, wonCampaigns: 1, woundedEnemies: 2 });
+    expect(veteran.every((achievement) => achievement.unlocked)).toBe(true);
   });
 });

@@ -32,6 +32,7 @@ Implemented and covered by automated tests:
 - Service-role-only, row-locking progression RPC that completes a quest and awards XP/damage once.
 - Optional adaptive quest generation after progression commits; failure cannot roll back the victory.
 - Responsive dark-fantasy UI, keyboard focus states, semantic structure, and reduced-motion support.
+- Focused quest board, compact secondary mission cards, persistent mobile adventure dock, and milestone cabinet derived from real progression state.
 - Unit, Route Handler, database-contract, and seeded golden-path tests with mocked external boundaries.
 
 Live Supabase and OpenAI calls have not been executed in this credential-free workspace. Run the manual checks below against your own project before describing the integrations as live-verified.

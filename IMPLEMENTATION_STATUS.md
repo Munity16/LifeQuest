@@ -10,7 +10,7 @@ Last updated: 2026-07-19
 - **Existing pages:** landing, login, signup, onboarding, campaign dashboard, quest detail/proof, profile, global loading, not-found, and error states.
 - **Existing API routes:** login, signup, logout, Supabase auth callback, demo start/reset, campaign generation, campaign lookup, profile progress, proof upload, proof verification/progression, and server-mediated Realtime narration.
 - **Existing database tables:** `profiles`, `campaigns`, `quests`, `quest_submissions`, and `progress_events` across two ordered migrations.
-- **Existing tests:** 12 Vitest files with 56 tests covering schemas, onboarding form serialization, hero ranks, quest-map state and interaction, gameplay, proof files, mocked OpenAI services, moderation, reset/narration Route Handlers, SQL security contracts, and the seeded golden path.
+- **Existing tests:** 12 Vitest files with 57 tests covering schemas, onboarding form serialization, hero ranks and achievements, quest-map state and interaction, gameplay, proof files, mocked OpenAI services, moderation, reset/narration Route Handlers, SQL security contracts, and the seeded golden path.
 - **Current build condition:** development server starts, required UI/demo routes return successful responses, lint/typecheck/tests pass, and the Next.js production build succeeds with auth-dependent pages classified as dynamic.
 - **Environment condition:** Local demo mode is explicitly enabled in the ignored `.env.local`; live Supabase and OpenAI credentials remain absent, so storage, RLS, live AI, and Vercel behavior cannot be exercised in this workspace and are not claimed as live-verified.
 
@@ -40,6 +40,7 @@ Development stopped after backend, migration, demo-data, and reusable-component 
 - `VERIFIED` Original medieval MMORPG-inspired visual system with parchment quest surfaces, wood/stone frames, bronze trim, segmented HUD bars, and responsive adventure-log states.
 - `VERIFIED` Persistent hero-versus-enemy campaign HUD with level, rank, XP, enemy health, and accessible progress labels on campaign and quest routes.
 - `VERIFIED` Connected adventure map with alternating quest nodes, playable links, fogged locked paths, completed victory seals, and a mobile single-track layout.
+- `VERIFIED` Reference-inspired interaction polish adds a recommended mission board, compact secondary quest shortcuts, strong active/completed actions, a three-tab mobile adventure dock, and achievement badges derived only from stored campaign progression.
 - `VERIFIED` Original locally served hero, enemy, and campaign-environment artwork generated for LifeQuest and optimized as WebP assets.
 - `VERIFIED` Combat-style verification and reward feedback with hero/enemy portraits, damage and XP callouts, rank-aware level-up messaging, unlock messaging, impact motion, and reduced-motion fallbacks.
 - `VERIFIED` Global loading, not-found, and error states; visible focus; semantic controls; mobile layout; and reduced-motion support.
@@ -137,3 +138,13 @@ Development stopped after backend, migration, demo-data, and reusable-component 
 - Demo reset: `VERIFIED`, restored 0 XP, 100/100 enemy health, 0% completion, and removed the adaptive side path.
 - 320px browser QA: `VERIFIED`, campaign and proof routes have matching client/scroll widths with no overflowing descendants after removing the legacy body minimum width.
 - Live OpenAI moderation, GPT-5.6 proof eval, and Realtime audio: `BLOCKED`, server credentials and a private eval image set are not present; no live result or score is claimed.
+
+### Reference-inspired interaction polish — 2026-07-19
+
+- `npm.cmd run lint`: `VERIFIED`, exit 0, no warnings.
+- `npm.cmd run typecheck`: `VERIFIED`, exit 0.
+- `npm.cmd run test`: `VERIFIED`, 12 files and 57 tests passed.
+- `npm.cmd run build`: `VERIFIED`, production build completed and all expected routes are present.
+- Campaign quest board: `VERIFIED`, recommended and compact secondary missions expose real time, XP, damage, and destination links.
+- Mobile adventure dock: `VERIFIED`, three 54px tap targets, correct `aria-current` state, and no horizontal overflow at a 320px viewport.
+- Achievement cabinet: `VERIFIED`, two-column mobile tiles unlock only from persisted XP, campaign status, level, and enemy health signals.

@@ -34,3 +34,14 @@ export function getHeroRank(level: number, startingTitle = "Code Apprentice") {
   if (safeLevel === 4) return "Campaign Knight";
   return "Realm Champion";
 }
+
+export type HeroAchievementId = "pathbound" | "first_victory" | "nemesis_wounded" | "realm_champion";
+
+export function getHeroAchievements({ totalXp, level, campaigns, wonCampaigns, woundedEnemies }: { totalXp: number; level: number; campaigns: number; wonCampaigns: number; woundedEnemies: number }) {
+  return [
+    { id: "pathbound" as const, title: "Pathbound", description: "Forge your first campaign.", unlocked: campaigns > 0 },
+    { id: "first_victory" as const, title: "First Victory", description: "Earn XP from a verified quest.", unlocked: totalXp > 0 },
+    { id: "nemesis_wounded" as const, title: "Nemesis Wounded", description: "Deal lasting damage to a campaign enemy.", unlocked: woundedEnemies > 0 },
+    { id: "realm_champion" as const, title: "Realm Champion", description: "Win a complete campaign and reach level 2.", unlocked: wonCampaigns > 0 && level >= 2 },
+  ] satisfies { id: HeroAchievementId; title: string; description: string; unlocked: boolean }[];
+}

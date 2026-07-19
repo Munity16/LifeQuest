@@ -4,6 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Crown, ScrollText, Sparkles, Swords } from "lucide-react";
 import { AppHeader } from "@/components/app-header";
+import { HeroAchievements } from "@/components/hero-achievements";
 import { getAuthContext } from "@/lib/auth";
 import { DEMO_CAMPAIGN_ID } from "@/lib/config";
 import { getDemoCampaign } from "@/lib/demo-data";
@@ -49,6 +50,7 @@ function ProfileView({ email, displayName, totalXp, level, campaigns, isDemo = f
           <div><span className="eyebrow">Hero record</span><h1>{displayName}</h1><strong className="profile-rank">{rank}</strong><p>{email}</p></div>
           <dl><div><dt><Sparkles size={16} /> Total XP</dt><dd>{totalXp}</dd></div><div><dt><Crown size={16} /> Current level</dt><dd>{level}</dd></div><div><dt><Swords size={16} /> Campaigns</dt><dd>{campaigns.length}</dd></div></dl>
         </section>
+        <HeroAchievements totalXp={totalXp} level={level} campaigns={campaigns.length} wonCampaigns={campaigns.filter((campaign) => campaign.status === "won").length} woundedEnemies={campaigns.filter((campaign) => campaign.enemy_current_health < 100).length} />
         <section className="profile-campaigns" aria-labelledby="profile-campaign-title">
           <div className="section-title-row"><div><span className="eyebrow"><ScrollText size={15} /> Save archive</span><h2 id="profile-campaign-title">Your adventures</h2></div><Link className="button button-secondary" href="/onboarding">New campaign</Link></div>
           {campaigns.length ? <div className="profile-campaign-list">{campaigns.map((campaign) => <Link key={campaign.id} href={`/campaign/${campaign.id}`}><div><strong>{campaign.campaign_name}</strong><span>{campaign.status}</span></div><small>{campaign.enemy_current_health} enemy HP remains</small></Link>)}</div> : <div className="state-card"><h2>No campaigns yet</h2><p>Forge your first campaign to begin earning XP.</p><Link className="button button-primary" href="/onboarding">Forge a campaign</Link></div>}

@@ -8,6 +8,7 @@ import { CampaignHero } from "@/components/campaign-hero";
 import { DemoResetButton } from "@/components/demo-reset-button";
 import { EmptyState } from "@/components/states";
 import { QuestCard } from "@/components/quest-card";
+import { QuestFocusBoard } from "@/components/quest-focus-board";
 import { QuestMap } from "@/components/quest-map";
 import { getAuthContext } from "@/lib/auth";
 import { campaignProgress, getCampaign } from "@/lib/data";
@@ -41,6 +42,8 @@ export default async function CampaignPage({ params }: { params: Promise<{ campa
           <div><span><Flag size={16} /> Campaign progress</span><strong>{coreQuests.filter((quest) => quest.status === "completed").length} of {coreQuests.length} core quests complete</strong></div>
           <div className="progress-track campaign-progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}><span style={{ width: `${progress}%` }} /></div>
         </section>
+
+        <QuestFocusBoard readyQuests={readyQuests} completedCount={coreQuests.filter((quest) => quest.status === "completed").length} totalCount={coreQuests.length} />
 
         <section className="quest-section" aria-labelledby="quest-title">
           <div className="section-title-row"><div><span className="eyebrow"><MapPinned size={15} /> Adventure map</span><h2 id="quest-title">Follow the path to victory</h2></div><small>{readyQuests.length} quests ready</small></div>
