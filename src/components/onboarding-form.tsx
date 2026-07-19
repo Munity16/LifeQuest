@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { Brain, Clock3, Gauge, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { InlineLoader } from "@/components/states";
@@ -23,6 +23,21 @@ const difficulties = [
   ["balanced", "Balanced", "Steady progress with meaningful challenge"],
   ["challenging", "Challenging", "Bolder tasks and greater rewards"],
 ] as const;
+
+function StepHeading({ step, title, subtitle }: { step: number; title: string; subtitle: string }) {
+  return (
+    <>
+      <legend className="onboarding-legend-sr">Step {step}: {title}. {subtitle}</legend>
+      <div className="onboarding-section-heading">
+        <span aria-hidden="true">{step}</span>
+        <div>
+          <h2>{title}</h2>
+          <p>{subtitle}</p>
+        </div>
+      </div>
+    </>
+  );
+}
 
 function responseError(payload: unknown) {
   if (typeof payload === "object" && payload && "error" in payload) {
@@ -73,41 +88,71 @@ export function OnboardingForm({ isDemo }: { isDemo: boolean }) {
     <form className="onboarding-form" onSubmit={handleSubmit(onSubmit)}>
       {isDemo && <div className="demo-notice"><Sparkles size={16} /><span>Demo mode uses the pre-generated Python campaign for presentation reliability.</span></div>}
       <fieldset className="onboarding-section onboarding-goal">
-        <legend><span>1</span><div><strong>Choose your destination</strong><small>What do you want to achieve?</small></div></legend>
-        <label className="sr-only" htmlFor="goal">Your goal</label>
-        <textarea id="goal" rows={3} maxLength={240} {...register("goal")} aria-invalid={Boolean(errors.goal)} />
-        <div className="field-helper"><span>Example: Learn Python fundamentals in seven days.</span><span>{goal?.length || 0}/240</span></div>
-        {errors.goal && <p className="field-error">{errors.goal.message}</p>}
-      </fieldset>
-
-      <fieldset className="onboarding-section">
-        <legend><span>2</span><div><strong>Set your daily pace</strong><small>How much focused time can you protect?</small></div></legend>
-        <div className="choice-grid time-grid">
-          {times.map((time) => <label className="choice-card" key={time}><input type="radio" value={time} {...register("dailyMinutes", { valueAsNumber: true })} /><Clock3 size={19} /><strong>{time}</strong><small>minutes</small></label>)}
+        <StepHeading step={1} title="Choose your destination" subtitle="What do you want to achieve?" />
+        <div className="onboarding-section-body">
+          <label className="sr-only" htmlFor="goal">Your goal</label>
+          <textarea id="goal" rows={3} maxLength={240} {...register("goal")} aria-invalid={Boolean(errors.goal)} />
+          <div className="field-helper"><span>Example: Learn Python fundamentals in seven days.</span><span>{goal?.length || 0}/240</span></div>
+          {errors.goal && <p className="field-error">{errors.goal.message}</p>}
         </div>
-        {errors.dailyMinutes && <p className="field-error">{errors.dailyMinutes.message}</p>}
       </fieldset>
 
       <fieldset className="onboarding-section">
-        <legend><span>3</span><div><strong>Name your nemesis</strong><small>What most often blocks your progress?</small></div></legend>
-        <div className="choice-grid obstacle-grid">
-          {obstacles.map(([value, label]) => <label className="choice-pill" key={value}><input type="radio" value={value} {...register("mainObstacle")} /><Brain size={15} /><span>{label}</span></label>)}
+        <StepHeading step={2} title="Set your daily pace" subtitle="How much focused time can you protect?" />
+        <div className="onboarding-section-body">
+          <Controller
+            control={control}
+            name="dailyMinutes"
+            render={({ field }) => (
+              <div className="choice-grid time-grid">
+                {times.map((time) => (
+                  <label className="choice-card" key={time}>
+                    <input
+                      ref={field.ref}
+                      name={field.name}
+                      type="radio"
+                      value={time}
+                      aria-label={`${time} minutes`}
+                      checked={field.value === time}
+                      onBlur={field.onBlur}
+                      onChange={() => field.onChange(time)}
+                    />
+                    <Clock3 size={19} />
+                    <strong>{time}</strong>
+                    <small>minutes</small>
+                  </label>
+                ))}
+              </div>
+            )}
+          />
+          {errors.dailyMinutes && <p className="field-error">{errors.dailyMinutes.message}</p>}
         </div>
-        {obstacle === "other" && <div className="field-group other-field"><label htmlFor="customObstacle">Describe your obstacle</label><input id="customObstacle" {...register("customObstacle")} /></div>}
-        {errors.customObstacle && <p className="field-error">{errors.customObstacle.message}</p>}
       </fieldset>
 
       <fieldset className="onboarding-section">
-        <legend><span>4</span><div><strong>Choose your difficulty</strong><small>You can succeed at every level.</small></div></legend>
-        <div className="difficulty-grid">
-          {difficulties.map(([value, label, description], index) => (
-            <label className="difficulty-card" key={value}>
-              <input type="radio" value={value} {...register("difficulty")} />
-              <span className="difficulty-icon"><Gauge size={20} /></span>
-              <span><strong>{label}</strong><small>{description}</small></span>
-              {index === 1 && <em>Recommended</em>}
-            </label>
-          ))}
+        <StepHeading step={3} title="Name your nemesis" subtitle="What most often blocks your progress?" />
+        <div className="onboarding-section-body">
+          <div className="choice-grid obstacle-grid">
+            {obstacles.map(([value, label]) => <label className="choice-pill" key={value}><input type="radio" value={value} {...register("mainObstacle")} /><Brain size={15} /><span>{label}</span></label>)}
+          </div>
+          {obstacle === "other" && <div className="field-group other-field"><label htmlFor="customObstacle">Describe your obstacle</label><input id="customObstacle" {...register("customObstacle")} /></div>}
+          {errors.customObstacle && <p className="field-error">{errors.customObstacle.message}</p>}
+        </div>
+      </fieldset>
+
+      <fieldset className="onboarding-section">
+        <StepHeading step={4} title="Choose your difficulty" subtitle="You can succeed at every level." />
+        <div className="onboarding-section-body">
+          <div className="difficulty-grid">
+            {difficulties.map(([value, label, description], index) => (
+              <label className="difficulty-card" key={value}>
+                <input type="radio" value={value} {...register("difficulty")} />
+                <span className="difficulty-icon"><Gauge size={20} /></span>
+                <span><strong>{label}</strong><small>{description}</small></span>
+                {index === 1 && <em>Recommended</em>}
+              </label>
+            ))}
+          </div>
         </div>
       </fieldset>
 

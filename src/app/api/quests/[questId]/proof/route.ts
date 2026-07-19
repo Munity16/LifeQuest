@@ -9,7 +9,8 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 export async function POST(request: Request, context: { params: Promise<{ questId: string }> }) {
   try {
     const { questId } = await context.params;
-    const file = (await request.formData()).get("proof");
+    const formData = await request.formData();
+    const file = formData.get("proof");
     validateProofFile(file);
     const bytes = new Uint8Array(await file.arrayBuffer());
     if (!hasValidImageSignature(bytes, file.type)) {
@@ -20,7 +21,9 @@ export async function POST(request: Request, context: { params: Promise<{ questI
     if (auth.kind === "demo") {
       const quest = getDemoCampaign().quests.find((item) => item.id === questId);
       if (!quest) throw new AppError("Quest not found.", 404, "NOT_FOUND");
-      return Response.json({ submissionId: questId, demoFallback: true }, { status: 201 });
+      const requestedOutcome = formData.get("demoOutcome");
+      const demoOutcome = requestedOutcome === "rejected" ? "rejected" : "accepted";
+      return Response.json({ submissionId: questId, demoOutcome, demoFallback: true }, { status: 201 });
     }
     if (auth.kind !== "user") throw new AppError("Sign in to submit proof.", 401, "UNAUTHORIZED");
 

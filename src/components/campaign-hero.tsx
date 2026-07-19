@@ -1,4 +1,6 @@
-import { Crown, ScrollText, ShieldAlert } from "lucide-react";
+import Image from "next/image";
+import { ScrollText } from "lucide-react";
+import { HeroPortrait, HeroTitle } from "@/components/hero-customization";
 import { EnemyHealthBar, XPProgressBar } from "@/components/progress-bars";
 import type { CampaignView } from "@/lib/types";
 
@@ -10,14 +12,14 @@ export function CampaignHero({ campaign }: { campaign: CampaignView }) {
         <h1>{campaign.campaignName}</h1>
         <p className="campaign-story">{campaign.story}</p>
         <div className="hero-identity">
-          <span className="hero-medallion" aria-hidden="true"><Crown size={22} /></span>
-          <div><small>Your title</small><strong>{campaign.heroName}</strong></div>
+          <span className="hero-portrait-frame"><HeroPortrait alt={`${campaign.heroName} portrait`} size={78} /></span>
+          <div><small>Level {campaign.currentLevel} hero</small><HeroTitle as="strong" level={campaign.currentLevel} startingTitle={campaign.heroName} /><span>{campaign.heroName}</span></div>
         </div>
       </div>
       <div className="enemy-card">
-        <div className="enemy-sigil" aria-hidden="true"><ShieldAlert size={29} /></div>
+        <div className="enemy-portrait-frame"><Image src="/art/delay-demon.webp" alt={`${campaign.enemyName} portrait`} width={128} height={128} sizes="128px" priority /></div>
         <div className="enemy-copy">
-          <span>Nemesis</span>
+          <span>Campaign boss</span>
           <h2>{campaign.enemyName}</h2>
           <p>{campaign.enemyDescription}</p>
         </div>

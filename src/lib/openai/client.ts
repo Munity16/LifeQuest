@@ -18,3 +18,11 @@ export function getOpenAIClient() {
 export function getOpenAIModel() {
   return process.env.OPENAI_MODEL?.trim() || "gpt-5.6";
 }
+
+export function getOpenAIModerationModel() {
+  return process.env.OPENAI_MODERATION_MODEL?.trim() || "omni-moderation-latest";
+}
+
+export function getOpenAIRealtimeModel() {
+  return process.env.OPENAI_REALTIME_MODEL?.trim() || "gpt-realtime-2.1";
+}

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { calculateCampaignProgress, calculateEnemyHealth, calculateLevel, calculateLevelProgress, canAwardQuest } from "@/lib/gameplay";
+import { calculateCampaignProgress, calculateEnemyHealth, calculateLevel, calculateLevelProgress, canAwardQuest, getHeroAchievements, getHeroRank } from "@/lib/gameplay";
+import { isHeroTitleUnlocked, resolveHeroTitle } from "@/lib/customization";
 
 describe("gameplay calculations", () => {
   it.each([
@@ -32,5 +33,30 @@ describe("gameplay calculations", () => {
     expect(canAwardQuest("available", 0)).toBe(true);
     expect(canAwardQuest("completed", 0)).toBe(false);
     expect(canAwardQuest("available", 20)).toBe(false);
+  });
+
+  it.each([
+    [1, "Code Apprentice"],
+    [2, "Rune Initiate"],
+    [3, "Quest Adept"],
+    [4, "Campaign Knight"],
+    [8, "Realm Champion"],
+  ])("assigns the level %i hero rank", (level, rank) => {
+    expect(getHeroRank(level)).toBe(rank);
+  });
+
+  it("unlocks achievements only from persisted progression signals", () => {
+    const fresh = getHeroAchievements({ totalXp: 0, level: 1, campaigns: 1, wonCampaigns: 0, woundedEnemies: 0 });
+    expect(fresh.filter((achievement) => achievement.unlocked).map((achievement) => achievement.id)).toEqual(["pathbound"]);
+
+    const veteran = getHeroAchievements({ totalXp: 240, level: 3, campaigns: 2, wonCampaigns: 1, woundedEnemies: 2 });
+    expect(veteran.every((achievement) => achievement.unlocked)).toBe(true);
+  });
+
+  it("only exposes earned hero titles while preserving automatic rank progression", () => {
+    expect(isHeroTitleUnlocked("campaign_knight", 3)).toBe(false);
+    expect(isHeroTitleUnlocked("campaign_knight", 4)).toBe(true);
+    expect(resolveHeroTitle("automatic", 3)).toBe("Quest Adept");
+    expect(resolveHeroTitle("rune_initiate", 4)).toBe("Rune Initiate");
   });
 });

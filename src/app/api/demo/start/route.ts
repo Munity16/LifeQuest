@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { DEMO_COOKIE, DEMO_PROGRESS_COOKIE, isDemoEnabled } from "@/lib/config";
+import { DEMO_COOKIE, DEMO_PREFERENCES_COOKIE, DEMO_PROGRESS_COOKIE, isDemoEnabled } from "@/lib/config";
+import { DEFAULT_APPEARANCE_PREFERENCES } from "@/lib/customization";
+import { encodeDemoAppearancePreferences } from "@/lib/demo-session";
 
 export async function GET(request: Request) {
   if (!isDemoEnabled()) {
@@ -16,5 +18,6 @@ export async function GET(request: Request) {
   };
   response.cookies.set(DEMO_COOKIE, "active", cookieOptions);
   response.cookies.set(DEMO_PROGRESS_COOKIE, encodeURIComponent("[]"), cookieOptions);
+  response.cookies.set(DEMO_PREFERENCES_COOKIE, encodeDemoAppearancePreferences(DEFAULT_APPEARANCE_PREFERENCES), cookieOptions);
   return response;
 }

@@ -11,9 +11,9 @@ export interface Database {
   public: {
     Tables: {
       profiles: Table<
-        { id: string; display_name: string | null; avatar_url: string | null; total_xp: number; current_level: number; created_at: string; updated_at: string },
-        { id: string; display_name?: string | null; avatar_url?: string | null; total_xp?: number; current_level?: number; created_at?: string; updated_at?: string },
-        { display_name?: string | null; avatar_url?: string | null; updated_at?: string }
+        { id: string; display_name: string | null; avatar_url: string | null; appearance_preferences: Json; total_xp: number; current_level: number; created_at: string; updated_at: string },
+        { id: string; display_name?: string | null; avatar_url?: string | null; appearance_preferences?: Json; total_xp?: number; current_level?: number; created_at?: string; updated_at?: string },
+        { display_name?: string | null; avatar_url?: string | null; appearance_preferences?: Json; updated_at?: string }
       >;
       campaigns: Table<
         { id: string; user_id: string; generation_key: string | null; goal: string; daily_minutes: number; main_obstacle: string; difficulty: string; campaign_name: string; hero_name: string; enemy_name: string; enemy_description: string | null; story: string; enemy_max_health: number; enemy_current_health: number; status: string; created_at: string; updated_at: string },

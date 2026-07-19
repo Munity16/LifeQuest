@@ -13,7 +13,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "eval:proof": "node scripts/run-proof-evals.mjs",
+    "eval:proof:validate": "node scripts/run-proof-evals.mjs --validate"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

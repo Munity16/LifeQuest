@@ -3,6 +3,8 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const migration = readFileSync(resolve(process.cwd(), "supabase/migrations/202607170002_secure_server_mutations.sql"), "utf8");
+const initialMigration = readFileSync(resolve(process.cwd(), "supabase/migrations/202607170001_initial_schema.sql"), "utf8");
+const appearanceMigration = readFileSync(resolve(process.cwd(), "supabase/migrations/202607190003_profile_appearance.sql"), "utf8");
 
 describe("secure database mutation migration", () => {
   it("restricts campaign creation and progression to the service role", () => {
@@ -22,5 +24,13 @@ describe("secure database mutation migration", () => {
     expect(migration).toMatch(/public\.quests[\s\S]+for update/i);
     expect(migration).toContain("least(v_quest.enemy_damage, v_campaign.enemy_current_health)");
     expect(migration).toContain("v_quest.status = 'completed' or v_submission.xp_awarded > 0");
+  });
+});
+
+describe("profile appearance migration", () => {
+  it("stores only JSON objects behind the existing own-profile RLS policy", () => {
+    expect(appearanceMigration).toContain("jsonb_typeof(appearance_preferences) = 'object'");
+    expect(appearanceMigration).toContain("grant update (appearance_preferences)");
+    expect(initialMigration).toMatch(/profiles_update_own[\s\S]+auth\.uid\(\) = id[\s\S]+auth\.uid\(\) = id/i);
   });
 });

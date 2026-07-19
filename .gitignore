@@ -12,6 +12,8 @@
 /coverage
 /playwright-report
 /test-results
+/evals/proofs/
+/evals/reports/
 
 # environment files
 .env*
