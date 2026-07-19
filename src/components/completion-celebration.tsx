@@ -5,12 +5,15 @@ import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Crown, Shield, Sparkles, Swords, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { VerificationDetails } from "@/components/verification-details";
-import { getHeroRank } from "@/lib/gameplay";
+import { useAppearance } from "@/components/appearance-provider";
+import { HeroPortrait } from "@/components/hero-customization";
+import { resolveHeroTitle } from "@/lib/customization";
 import type { CompletionResult } from "@/lib/types";
 
 export function CompletionCelebration({ result, onContinue }: { result: CompletionResult; onContinue: () => void }) {
   const reduceMotion = useReducedMotion();
-  const rank = getHeroRank(result.currentLevel);
+  const { preferences } = useAppearance();
+  const rank = resolveHeroTitle(preferences.heroTitle, result.currentLevel);
   return (
     <motion.div className="celebration-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} role="dialog" aria-modal="true" aria-labelledby="victory-title">
       <motion.div className="celebration-card" initial={reduceMotion ? undefined : { opacity: 0, y: 28, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ type: "spring", damping: 22 }}>
@@ -22,7 +25,7 @@ export function CompletionCelebration({ result, onContinue }: { result: Completi
         <VerificationDetails result={result} collapsible />
         <div className="victory-combat-stage" aria-label={`${rank} dealt ${result.enemyDamage} damage to the enemy`}>
           <motion.figure initial={reduceMotion ? undefined : { x: -18, opacity: 0 }} animate={{ x: 0, opacity: 1 }}>
-            <span><Image src="/art/code-apprentice.webp" alt="Code Apprentice" width={112} height={112} sizes="112px" /></span>
+            <span><HeroPortrait alt="Your customized hero" size={112} /></span>
             <figcaption>{rank}</figcaption>
           </motion.figure>
           <div className="victory-impact" aria-hidden="true">

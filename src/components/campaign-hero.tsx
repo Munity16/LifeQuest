@@ -1,11 +1,10 @@
 import Image from "next/image";
 import { ScrollText } from "lucide-react";
+import { HeroPortrait, HeroTitle } from "@/components/hero-customization";
 import { EnemyHealthBar, XPProgressBar } from "@/components/progress-bars";
-import { getHeroRank } from "@/lib/gameplay";
 import type { CampaignView } from "@/lib/types";
 
 export function CampaignHero({ campaign }: { campaign: CampaignView }) {
-  const rank = getHeroRank(campaign.currentLevel, campaign.heroName);
   return (
     <section className="campaign-hero panel-glow">
       <div className="campaign-hero-main">
@@ -13,8 +12,8 @@ export function CampaignHero({ campaign }: { campaign: CampaignView }) {
         <h1>{campaign.campaignName}</h1>
         <p className="campaign-story">{campaign.story}</p>
         <div className="hero-identity">
-          <span className="hero-portrait-frame"><Image src="/art/code-apprentice.webp" alt={`${campaign.heroName} portrait`} width={78} height={78} sizes="78px" /></span>
-          <div><small>Level {campaign.currentLevel} hero</small><strong>{rank}</strong><span>{campaign.heroName}</span></div>
+          <span className="hero-portrait-frame"><HeroPortrait alt={`${campaign.heroName} portrait`} size={78} /></span>
+          <div><small>Level {campaign.currentLevel} hero</small><HeroTitle as="strong" level={campaign.currentLevel} startingTitle={campaign.heroName} /><span>{campaign.heroName}</span></div>
         </div>
       </div>
       <div className="enemy-card">

@@ -8,9 +8,9 @@ Last updated: 2026-07-19
 - **Package manager:** npm with `package-lock.json` lockfile version 3. The Windows host requires `npm.cmd` because its PowerShell policy blocks `npm.ps1`.
 - **Current branch:** `codex/resume-lifequest`. Recovery began from an unborn `master` branch with no commits and all existing project files untracked; no user files were reset or discarded.
 - **Existing pages:** landing, login, signup, onboarding, campaign dashboard, quest detail/proof, profile, global loading, not-found, and error states.
-- **Existing API routes:** login, signup, logout, Supabase auth callback, demo start/reset, campaign generation, campaign lookup, profile progress, proof upload, proof verification/progression, and server-mediated Realtime narration.
-- **Existing database tables:** `profiles`, `campaigns`, `quests`, `quest_submissions`, and `progress_events` across two ordered migrations.
-- **Existing tests:** 12 Vitest files with 57 tests covering schemas, onboarding form serialization, hero ranks and achievements, quest-map state and interaction, gameplay, proof files, mocked OpenAI services, moderation, reset/narration Route Handlers, SQL security contracts, and the seeded golden path.
+- **Existing API routes:** login, signup, logout, Supabase auth callback, demo start/reset, campaign generation, campaign lookup, profile progress/preferences, proof upload, proof verification/progression, and server-mediated Realtime narration.
+- **Existing database tables:** `profiles`, `campaigns`, `quests`, `quest_submissions`, and `progress_events` across three ordered migrations.
+- **Existing tests:** 13 Vitest files with 64 tests covering schemas, onboarding form serialization, hero ranks, appearance preferences, achievements, quest-map state and interaction, gameplay, proof files, mocked OpenAI services, moderation, reset/narration/preferences Route Handlers, SQL security contracts, and the seeded golden path.
 - **Current build condition:** development server starts, required UI/demo routes return successful responses, lint/typecheck/tests pass, and the Next.js production build succeeds with auth-dependent pages classified as dynamic.
 - **Environment condition:** Local demo mode is explicitly enabled in the ignored `.env.local`; live Supabase and OpenAI credentials remain absent, so storage, RLS, live AI, and Vercel behavior cannot be exercised in this workspace and are not claimed as live-verified.
 
@@ -41,6 +41,8 @@ Development stopped after backend, migration, demo-data, and reusable-component 
 - `VERIFIED` Persistent hero-versus-enemy campaign HUD with level, rank, XP, enemy health, and accessible progress labels on campaign and quest routes.
 - `VERIFIED` Connected adventure map with alternating quest nodes, playable links, fogged locked paths, completed victory seals, and a mobile single-track layout.
 - `VERIFIED` Reference-inspired interaction polish adds a recommended mission board, compact secondary quest shortcuts, strong active/completed actions, a three-tab mobile adventure dock, and achievement badges derived only from stored campaign progression.
+- `VERIFIED` Hero Workshop adds five full-realm themes, five original archetype portraits, four crest symbols, four accent colors, level-gated titles, larger text, high contrast, reduced motion, compact density, and narration controls with immediate preview.
+- `VERIFIED` Appearance preferences are Zod-validated, persist to the user's RLS-protected profile in live mode, use a private HTTP-only cookie in labelled demo mode, and apply globally to the header, profile, campaign HUD, quest screens, and victory feedback.
 - `VERIFIED` Original locally served hero, enemy, and campaign-environment artwork generated for LifeQuest and optimized as WebP assets.
 - `VERIFIED` Combat-style verification and reward feedback with hero/enemy portraits, damage and XP callouts, rank-aware level-up messaging, unlock messaging, impact motion, and reduced-motion fallbacks.
 - `VERIFIED` Global loading, not-found, and error states; visible focus; semantic controls; mobile layout; and reduced-motion support.
@@ -148,3 +150,14 @@ Development stopped after backend, migration, demo-data, and reusable-component 
 - Campaign quest board: `VERIFIED`, recommended and compact secondary missions expose real time, XP, damage, and destination links.
 - Mobile adventure dock: `VERIFIED`, three 54px tap targets, correct `aria-current` state, and no horizontal overflow at a 320px viewport.
 - Achievement cabinet: `VERIFIED`, two-column mobile tiles unlock only from persisted XP, campaign status, level, and enemy health signals.
+
+### Hero customization verification — 2026-07-19
+
+- `npm.cmd run lint`: `VERIFIED`, exit 0, no warnings.
+- `npm.cmd run typecheck`: `VERIFIED`, exit 0.
+- `npm.cmd run test`: `VERIFIED`, 13 files and 64 tests passed.
+- `npm.cmd run build`: `VERIFIED`, production build completed with the profile preferences route present and all expected pages dynamic.
+- Preferences boundary: `VERIFIED`, unsupported fields and values are rejected; live title selection is checked against the server-read level; demo state uses an HTTP-only cookie.
+- In-app browser: `VERIFIED`, theme, portrait, crest, accent, and larger-text preview updated immediately, survived reload, and appeared in the campaign HUD.
+- 320px browser QA: `VERIFIED`, the Hero Workshop remains within the viewport with no horizontal overflow and collapses theme/accessibility controls to one readable column.
+- Live Supabase preference persistence: `BLOCKED`, the target database migration and credentials are not present in this workspace; the RLS policy and SQL grant are contract-tested only.

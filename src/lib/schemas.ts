@@ -111,7 +111,21 @@ export const verificationRequestSchema = z.object({
 
 export const generationKeySchema = z.uuid("A valid campaign generation key is required.");
 
+export const appearancePreferencesSchema = z.object({
+  theme: z.enum(["classic", "moonlit", "ember", "verdant", "amethyst"]),
+  archetype: z.enum(["scholar", "knight", "mage", "ranger", "rogue"]),
+  heroTitle: z.enum(["automatic", "code_apprentice", "rune_initiate", "quest_adept", "campaign_knight", "realm_champion"]),
+  crest: z.enum(["rune", "crown", "shield", "star"]),
+  accent: z.enum(["gold", "violet", "emerald", "crimson"]),
+  fontScale: z.enum(["standard", "large"]),
+  contrast: z.enum(["standard", "high"]),
+  motion: z.enum(["system", "reduced"]),
+  density: z.enum(["comfortable", "compact"]),
+  soundEnabled: z.boolean(),
+}).strict();
+
 export type OnboardingInput = z.infer<typeof onboardingSchema>;
 export type GeneratedCampaign = z.infer<typeof generatedCampaignSchema>;
 export type GeneratedQuest = z.infer<typeof generatedQuestSchema>;
 export type ProofVerification = z.infer<typeof proofVerificationSchema>;
+export type AppearancePreferences = z.infer<typeof appearancePreferencesSchema>;

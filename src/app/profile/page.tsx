@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Crown, ScrollText, Sparkles, Swords } from "lucide-react";
 import { AppHeader } from "@/components/app-header";
 import { HeroAchievements } from "@/components/hero-achievements";
+import { HeroCustomizationPanel } from "@/components/hero-customization-panel";
+import { HeroPortrait, HeroTitle } from "@/components/hero-customization";
 import { getAuthContext } from "@/lib/auth";
 import { DEMO_CAMPAIGN_ID } from "@/lib/config";
 import { getDemoCampaign } from "@/lib/demo-data";
 import { getDemoCompletedQuestIds } from "@/lib/demo-session";
 import { AppError } from "@/lib/errors";
-import { getHeroRank } from "@/lib/gameplay";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Hero profile" };
@@ -40,16 +40,16 @@ export default async function ProfilePage() {
 }
 
 function ProfileView({ email, displayName, totalXp, level, campaigns, isDemo = false }: { email: string; displayName: string; totalXp: number; level: number; campaigns: { id: string; campaign_name: string; status: string; enemy_current_health: number }[]; isDemo?: boolean }) {
-  const rank = getHeroRank(level);
   return (
     <div className="site-page app-page">
       <AppHeader email={email} campaignId={campaigns[0]?.id} isDemo={isDemo} />
       <main id="main-content" className="page-shell profile-page">
         <section className="profile-hero panel-glow">
-          <span className="profile-avatar profile-avatar-art"><Image src="/art/code-apprentice.webp" alt="Code Apprentice portrait" width={76} height={76} sizes="76px" /></span>
-          <div><span className="eyebrow">Hero record</span><h1>{displayName}</h1><strong className="profile-rank">{rank}</strong><p>{email}</p></div>
+          <span className="profile-avatar profile-avatar-art"><HeroPortrait alt={`${displayName} portrait`} size={76} /></span>
+          <div><span className="eyebrow">Hero record</span><h1>{displayName}</h1><HeroTitle as="strong" className="profile-rank" level={level} /><p>{email}</p></div>
           <dl><div><dt><Sparkles size={16} /> Total XP</dt><dd>{totalXp}</dd></div><div><dt><Crown size={16} /> Current level</dt><dd>{level}</dd></div><div><dt><Swords size={16} /> Campaigns</dt><dd>{campaigns.length}</dd></div></dl>
         </section>
+        <HeroCustomizationPanel level={level} displayName={displayName} isDemo={isDemo} />
         <HeroAchievements totalXp={totalXp} level={level} campaigns={campaigns.length} wonCampaigns={campaigns.filter((campaign) => campaign.status === "won").length} woundedEnemies={campaigns.filter((campaign) => campaign.enemy_current_health < 100).length} />
         <section className="profile-campaigns" aria-labelledby="profile-campaign-title">
           <div className="section-title-row"><div><span className="eyebrow"><ScrollText size={15} /> Save archive</span><h2 id="profile-campaign-title">Your adventures</h2></div><Link className="button button-secondary" href="/onboarding">New campaign</Link></div>

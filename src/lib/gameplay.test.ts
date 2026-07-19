@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { calculateCampaignProgress, calculateEnemyHealth, calculateLevel, calculateLevelProgress, canAwardQuest, getHeroAchievements, getHeroRank } from "@/lib/gameplay";
+import { isHeroTitleUnlocked, resolveHeroTitle } from "@/lib/customization";
 
 describe("gameplay calculations", () => {
   it.each([
@@ -50,5 +51,12 @@ describe("gameplay calculations", () => {
 
     const veteran = getHeroAchievements({ totalXp: 240, level: 3, campaigns: 2, wonCampaigns: 1, woundedEnemies: 2 });
     expect(veteran.every((achievement) => achievement.unlocked)).toBe(true);
+  });
+
+  it("only exposes earned hero titles while preserving automatic rank progression", () => {
+    expect(isHeroTitleUnlocked("campaign_knight", 3)).toBe(false);
+    expect(isHeroTitleUnlocked("campaign_knight", 4)).toBe(true);
+    expect(resolveHeroTitle("automatic", 3)).toBe("Quest Adept");
+    expect(resolveHeroTitle("rune_initiate", 4)).toBe("Rune Initiate");
   });
 });

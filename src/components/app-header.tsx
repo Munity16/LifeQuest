@@ -18,7 +18,7 @@ export function AppHeader({
     <>
       <header className="app-header">
         <div className="page-shell header-inner">
-          <BrandMark />
+          <BrandMark personalized={!publicNav} />
           {publicNav ? (
             <nav className="header-nav" aria-label="Primary navigation">
               <a href="#how-it-works"><ScrollText size={15} aria-hidden="true" /> Game loop</a>

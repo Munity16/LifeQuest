@@ -2,10 +2,12 @@
 
 import { Radio, Square, Volume2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useAppearance } from "@/components/appearance-provider";
 
 type NarrationState = "idle" | "connecting" | "playing";
 
 export function QuestNarrator({ campaignId, questId, title, storyIntro, objective, isDemo }: { campaignId: string; questId: string; title: string; storyIntro: string; objective: string; isDemo: boolean }) {
+  const { preferences } = useAppearance();
   const [state, setState] = useState<NarrationState>("idle");
   const [error, setError] = useState<string | null>(null);
   const peerRef = useRef<RTCPeerConnection | null>(null);
@@ -83,7 +85,9 @@ export function QuestNarrator({ campaignId, questId, title, storyIntro, objectiv
     <div className="quest-narrator">
       <audio ref={audioRef} autoPlay aria-label="Quest narration" />
       <span className="quest-narrator-mode"><Radio size={13} /> {isDemo ? "Device voice demo" : "OpenAI live voice"}</span>
-      {state === "idle" ? (
+      {!preferences.soundEnabled ? (
+        <span className="quest-narrator-muted">Narration is muted in Hero settings.</span>
+      ) : state === "idle" ? (
         <button type="button" onClick={() => isDemo ? playDeviceDemo() : void playLiveNarration()}><Volume2 size={16} /> Hear quest briefing</button>
       ) : (
         <button type="button" onClick={stop}><Square size={14} /> {state === "connecting" ? "Connecting..." : "Stop narration"}</button>

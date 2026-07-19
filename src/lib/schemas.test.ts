@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { generatedCampaignSchema, onboardingSchema, proofVerificationSchema } from "@/lib/schemas";
+import { appearancePreferencesSchema, generatedCampaignSchema, onboardingSchema, proofVerificationSchema } from "@/lib/schemas";
+import { DEFAULT_APPEARANCE_PREFERENCES } from "@/lib/customization";
 
 const quest = (sequenceNumber: number, difficulty: "gentle" | "balanced" | "challenging" = "balanced") => ({
   dayNumber: Math.min(7, sequenceNumber),
@@ -68,5 +69,16 @@ describe("proof verification schema", () => {
 
   it("rejects confidence outside the supported range", () => {
     expect(proofVerificationSchema.safeParse({ verified: false, confidence: 1.2, reason: "The image is unrelated.", requirementsAssessment: [] }).success).toBe(false);
+  });
+});
+
+describe("appearance preferences schema", () => {
+  it("accepts the complete supported customization model", () => {
+    expect(appearancePreferencesSchema.parse(DEFAULT_APPEARANCE_PREFERENCES)).toEqual(DEFAULT_APPEARANCE_PREFERENCES);
+  });
+
+  it("rejects unknown themes and extra browser-supplied fields", () => {
+    expect(appearancePreferencesSchema.safeParse({ ...DEFAULT_APPEARANCE_PREFERENCES, theme: "neon" }).success).toBe(false);
+    expect(appearancePreferencesSchema.safeParse({ ...DEFAULT_APPEARANCE_PREFERENCES, xp: 99999 }).success).toBe(false);
   });
 });
