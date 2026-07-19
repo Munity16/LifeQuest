@@ -129,7 +129,7 @@ Development stopped after backend, migration, demo-data, and reusable-component 
 - Demo proof loop: `VERIFIED`, accepted proof displayed the victory encounter, awarded 20 XP, dealt 10 enemy damage, updated the persistent HUD to 90/100 HP, marked the quest complete, and unlocked an adaptive path.
 - `npm.cmd run build`: `VERIFIED`, production build completed and all expected routes are present.
 
-### Hackathon judge-mode verification — 2026-07-19
+### Judge-mode verification — 2026-07-19
 
 - `npm.cmd run eval:proof:validate`: `VERIFIED`, eight JSONL cases validate and all intentionally absent private proof paths are reported.
 - `npm.cmd run lint`: `VERIFIED`, exit 0, no warnings.
