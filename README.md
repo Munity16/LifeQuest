@@ -1,21 +1,42 @@
 <div align="center">
 
-<img src="public/art/kingdom-python.webp" alt="The fantasy realm of LifeQuest" width="100%" />
-
 # LifeQuest
 
 ### Turn a real goal into an adventure you can finish.
 
 LifeQuest transforms practical goals into focused role-playing campaigns. Complete quests, submit private proof, defeat the obstacle standing in your way, and watch your hero grow.
 
-[![Next.js 16](https://img.shields.io/badge/Next.js-16-000000?style=for-the-badge&logo=nextdotjs)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![OpenAI](https://img.shields.io/badge/OpenAI-GPT--5.6-412991?style=for-the-badge&logo=openai&logoColor=white)](https://platform.openai.com/)
-[![Tests](https://img.shields.io/badge/Tests-64%20passing-4F7A45?style=for-the-badge)](#quality-gate)
+<a href="https://nextjs.org/"><kbd>Next.js 16</kbd></a>
+<a href="https://www.typescriptlang.org/"><kbd>TypeScript · strict</kbd></a>
+<a href="https://platform.openai.com/"><kbd>OpenAI · Responses API</kbd></a>
+<a href="#quality-gate"><kbd>✓ 64 tests</kbd></a>
 
 [Explore the game loop](#the-adventure-loop) · [View features](#what-awaits) · [Run locally](#quick-start) · [Deploy](#deployment)
 
 </div>
+
+<div align="center">
+
+<img src="public/readme/lifequest-walkthrough.gif" alt="Animated walkthrough of LifeQuest from goal onboarding through campaign progression" width="800" />
+
+<sub>Goal onboarding → campaign map → private proof → progression → hero customization</sub>
+
+</div>
+
+<details>
+<summary><strong>Enter the seeded realm</strong></summary>
+
+<br />
+
+<div align="center">
+
+<img src="public/art/kingdom-python.webp" alt="The fantasy realm of LifeQuest" width="800" />
+
+<sub>The Kingdom of Python—the deterministic demonstration campaign.</sub>
+
+</div>
+
+</details>
 
 ---
 
