@@ -1807,6 +1807,84 @@ a.quest-node:hover { transform: translateY(-2px); border-color: #e2b965; box-sha
   .quest-board-rewards span { font-size: 0.55rem; }
 }
 
+/* 9+ usability pass: action-first hierarchy, readable game UI, and mobile continuity */
+.campaign-page > .quest-focus-board { margin-top: 0; }
+.campaign-briefing-section { padding-top: 2rem; }
+.campaign-briefing-heading { margin-bottom: 0.8rem; }
+.campaign-briefing-section .campaign-hero { padding: clamp(1.15rem, 3vw, 1.65rem); }
+.campaign-briefing-section .campaign-hero h1 { font-size: clamp(2.2rem, 5vw, 3.75rem); }
+.campaign-story-disclosure { width: 100%; margin-top: 0.9rem; border-top: 1px solid rgba(85, 67, 38, 0.42); padding-top: 0.7rem; }
+.campaign-story-disclosure summary { width: fit-content; cursor: pointer; color: #5a713b; font: 900 0.68rem/1.3 "Courier New", monospace; letter-spacing: 0.04em; text-transform: uppercase; }
+.campaign-story-disclosure summary:hover { color: #3e582c; }
+.campaign-story-disclosure[open] summary { margin-bottom: 0.55rem; }
+.campaign-story-disclosure .campaign-story { margin-bottom: 0; }
+
+.quest-board-featured p { font-size: 0.9rem; line-height: 1.62; }
+.quest-board-rewards span { min-height: 1.85rem; font-size: 0.67rem; }
+.quest-board-primary-action { min-height: 2.8rem; }
+.quest-board-progress { grid-template-columns: auto minmax(0, 1fr); }
+.quest-board-progress span { font-size: 0.74rem; line-height: 1.45; }
+.quest-board-progress-track { grid-column: 1 / -1; overflow: hidden; height: 0.48rem; margin-top: 0.15rem; border: 1px solid #0e0d09; background: #0e100b; box-shadow: 0 0 0 1px #574d35; }
+.quest-board-progress-track i { display: block; height: 100%; background: linear-gradient(90deg, #536b34, #b5d572); box-shadow: inset 0 1px rgba(255, 255, 255, 0.28); transition: width 320ms ease; }
+.quest-board-compact small { font-size: 0.62rem; }
+.quest-board-compact strong { font-size: 0.82rem; }
+.quest-board-compact > span:last-child { font-size: 0.65rem; }
+.quest-board-map-link { min-height: 2.75rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; border: 1px solid #6b5735; padding: 0.6rem 0.7rem; color: #d9c99e; background: rgba(12, 10, 7, 0.28); font: 800 0.68rem/1 "Courier New", monospace; text-transform: uppercase; }
+.quest-board-map-link:hover { border-color: #b28d4e; color: #f2dda0; }
+.mobile-quest-cta { display: none; }
+
+.onboarding-step-nav { position: sticky; z-index: 12; top: 4.95rem; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); overflow: hidden; border: 2px solid #795d35; background: rgba(23, 20, 15, 0.96); box-shadow: 0 4px 18px rgba(0, 0, 0, 0.32); backdrop-filter: blur(12px); }
+.onboarding-step-nav a { min-height: 3rem; display: flex; align-items: center; justify-content: center; gap: 0.42rem; padding: 0.5rem; color: #c9b990; font-size: 0.74rem; font-weight: 800; }
+.onboarding-step-nav a + a { border-left: 1px solid #59482f; }
+.onboarding-step-nav a:hover { color: #f1d88f; background: rgba(111, 83, 43, 0.22); }
+.onboarding-step-nav a span { display: grid; place-items: center; width: 1.45rem; height: 1.45rem; border: 1px solid #9b7540; color: #f3dfa3; background: #40542d; font: 900 0.64rem/1 "Courier New", monospace; }
+.onboarding-loadout { display: flex; align-items: center; flex-wrap: wrap; gap: 0.45rem; border: 1px solid #6e5b3c; padding: 0.7rem; color: #d8caa5; background: rgba(25, 22, 17, 0.82); }
+.onboarding-loadout > strong { margin-right: auto; color: #f0d78e; font-family: Georgia, serif; font-size: 0.95rem; }
+.onboarding-loadout > span { min-height: 2rem; display: inline-flex; align-items: center; gap: 0.3rem; border: 1px solid #594a33; padding: 0.38rem 0.5rem; background: rgba(0, 0, 0, 0.18); font-size: 0.72rem; }
+.onboarding-section { scroll-margin-top: 9rem; }
+
+@media (max-width: 680px) {
+  .campaign-briefing-section { padding-top: 1.4rem; }
+  .campaign-briefing-heading { align-items: flex-end; }
+  .campaign-briefing-heading h2 { font-size: 1.35rem; }
+  .campaign-briefing-section .campaign-hero { padding: 0.85rem; }
+  .campaign-briefing-section .campaign-hero h1 { font-size: clamp(2rem, 11vw, 3rem); }
+  .quest-board-featured p { font-size: 0.86rem; }
+  .quest-board-rewards span { font-size: 0.65rem; }
+  .quest-board-featured > a.quest-board-primary-action { display: none; }
+  .quest-board-compact strong { font-size: 0.8rem; }
+  .mobile-adventure-nav a { min-height: 3.75rem; font-size: 0.64rem; }
+  .mobile-quest-cta { position: fixed; z-index: 89; right: 0.5rem; bottom: 4.85rem; left: 0.5rem; min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; border: 2px solid #bed57d; padding: 0.62rem 0.72rem; color: #f5efd9; background: linear-gradient(105deg, rgba(45, 62, 31, 0.98), rgba(71, 94, 46, 0.98)); box-shadow: 0 0 0 2px #0a0805, 0 10px 28px rgba(0, 0, 0, 0.46); }
+  .mobile-quest-cta > span:first-child { min-width: 0; display: grid; text-align: left; }
+  .mobile-quest-cta small { color: #c6dda0; font: 800 0.56rem/1 "Courier New", monospace; text-transform: uppercase; }
+  .mobile-quest-cta strong { overflow: hidden; margin-top: 0.18rem; font-size: 0.79rem; text-overflow: ellipsis; white-space: nowrap; }
+  .mobile-quest-cta > span:last-child { display: inline-flex; align-items: center; gap: 0.3rem; color: #fff0b8; font: 900 0.68rem/1 "Courier New", monospace; text-transform: uppercase; white-space: nowrap; }
+  .campaign-page { padding-bottom: 11rem; }
+
+  .onboarding-page { padding-bottom: 10rem; }
+  .onboarding-step-nav { top: 4.05rem; }
+  .onboarding-step-nav a { min-height: 3.2rem; flex-direction: column; gap: 0.18rem; padding: 0.35rem 0.2rem; font-size: 0.65rem; }
+  .onboarding-loadout { align-items: stretch; }
+  .onboarding-loadout > strong { flex-basis: 100%; margin-right: 0; }
+  .onboarding-loadout > span { flex: 1 1 8rem; justify-content: center; }
+  .onboarding-submit-wrap { position: fixed; z-index: 88; right: 0.5rem; bottom: 4.85rem; left: 0.5rem; margin: 0; border: 2px solid #8b6c3d; padding: 0.45rem; background: rgba(18, 15, 11, 0.98); box-shadow: 0 0 0 2px #090704, 0 10px 28px rgba(0, 0, 0, 0.48); }
+  .onboarding-submit { width: 100%; min-height: 3.05rem; padding-inline: 0.55rem; font-size: 0.67rem; white-space: nowrap; }
+  .onboarding-submit-wrap > small { display: none; }
+}
+
+@media (max-width: 390px) {
+  .campaign-hud-inner { gap: 0.3rem; }
+  .hud-combatant { gap: 0.38rem; }
+  .hud-portrait { width: 2.35rem; height: 2.35rem; }
+  .hud-stat-copy > strong { max-width: 100%; display: -webkit-box; overflow: hidden; font-size: 0.7rem; line-height: 1.05; text-overflow: clip; white-space: normal; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+  .hud-stat-copy > span { font-size: 0.56rem; }
+  .quest-board-heading { align-items: flex-start; }
+  .quest-board-count { padding: 0.32rem 0.42rem; }
+  .quest-board-rewards span { font-size: 0.62rem; }
+  .onboarding-step-nav a { font-size: 0.61rem; }
+  .onboarding-step-nav a span { width: 1.3rem; height: 1.3rem; }
+}
+
 /* Player customization: realm themes, identity, and accessibility */
 html[data-theme] {
   --theme-bg: #10150e;

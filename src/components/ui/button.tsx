@@ -1,15 +1,16 @@
-import type { ButtonHTMLAttributes } from "react";
+import { forwardRef, type ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
 type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 
-export function Button({
+export const Button = forwardRef<HTMLButtonElement, ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant }>(function Button({
   className,
   variant = "primary",
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant }) {
+}, ref) {
   return (
     <button
+      ref={ref}
       className={cn(
         "button",
         variant === "primary" && "button-primary",
@@ -21,4 +22,4 @@ export function Button({
       {...props}
     />
   );
-}
+});
