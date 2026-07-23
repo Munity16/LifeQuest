@@ -5,7 +5,7 @@ Last updated: 2026-07-23
 ## Current repository state
 
 - Branch: `codex/lifequest-v2`
-- Base commit: `bf0f0da8385...` from `codex/ui-ux-main`
+- Base integration: latest `origin/main` at `1b4cfcc`, merged before pull-request handoff
 - Runtime contract: Node 22 in `package.json`, `.nvmrc`, `.node-version`, CI, live-readiness CI, and README
 - Application: Next.js 16.2.11 App Router, React 19, strict TypeScript
 - Release focus: V2 Release 1 — Trust and correctness
