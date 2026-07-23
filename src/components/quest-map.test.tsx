@@ -21,7 +21,8 @@ function quest(sequenceNumber: number, status: QuestView["status"]): QuestView {
     enemyDamage: 15,
     successRequirements: ["The result is visible"],
     status,
-    isAdaptive: false,
+  isAdaptive: false,
+  isBossQuest: false,
     completedAt: status === "completed" ? "2026-07-19T00:00:00.000Z" : null,
   };
 }

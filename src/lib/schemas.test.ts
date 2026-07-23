@@ -14,6 +14,7 @@ const quest = (sequenceNumber: number, difficulty: "gentle" | "balanced" | "chal
   enemyDamage: difficulty === "gentle" ? 10 : difficulty === "balanced" ? 15 : 22,
   proofType: "image" as const,
   successRequirements: ["The completed practical work is clearly visible"],
+  isBossQuest: sequenceNumber === 7,
 });
 
 const campaign = {
@@ -22,7 +23,15 @@ const campaign = {
   enemyName: "Delay Wraith",
   enemyDescription: "A patient shadow that grows whenever meaningful work is postponed.",
   story: "Cross the focused path one practical victory at a time and break the delay wraith's hold.",
-  quests: [quest(1, "gentle"), quest(2), quest(3, "challenging")],
+  quests: [
+    quest(1, "gentle"),
+    quest(2),
+    quest(3),
+    quest(4),
+    quest(5),
+    quest(6),
+    quest(7, "challenging"),
+  ],
 };
 
 describe("onboarding schema", () => {
@@ -43,17 +52,28 @@ describe("onboarding schema", () => {
 
 describe("generated campaign schema", () => {
   it("accepts valid sequential quests and reward bands", () => {
-    expect(generatedCampaignSchema.parse(campaign).quests).toHaveLength(3);
+    expect(generatedCampaignSchema.parse(campaign).quests).toHaveLength(7);
   });
 
   it("rejects duplicate or non-consecutive sequence numbers", () => {
-    const invalid = { ...campaign, quests: [quest(1), quest(1), quest(4)] };
+    const invalid = { ...campaign, quests: [quest(1), quest(1), quest(3), quest(4), quest(5), quest(6), quest(7)] };
     expect(generatedCampaignSchema.safeParse(invalid).success).toBe(false);
   });
 
   it("rejects rewards outside the difficulty band", () => {
-    const invalid = { ...campaign, quests: [{ ...quest(1, "gentle"), xpReward: 60 }, quest(2), quest(3)] };
+    const invalid = { ...campaign, quests: [{ ...quest(1, "gentle"), xpReward: 60 }, ...campaign.quests.slice(1)] };
     expect(generatedCampaignSchema.safeParse(invalid).success).toBe(false);
+  });
+
+  it("requires one unique quest per day and only a Day 7 boss", () => {
+    expect(generatedCampaignSchema.safeParse({
+      ...campaign,
+      quests: campaign.quests.map((item, index) => index === 1 ? { ...item, dayNumber: 1 } : item),
+    }).success).toBe(false);
+    expect(generatedCampaignSchema.safeParse({
+      ...campaign,
+      quests: campaign.quests.map((item, index) => index === 2 ? { ...item, isBossQuest: true } : item),
+    }).success).toBe(false);
   });
 });
 

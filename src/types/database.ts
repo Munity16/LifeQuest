@@ -21,14 +21,14 @@ export interface Database {
         { generation_key?: string | null; status?: string; updated_at?: string }
       >;
       quests: Table<
-        { id: string; campaign_id: string; user_id: string; day_number: number; sequence_number: number; title: string; story_intro: string | null; description: string; difficulty: string; estimated_minutes: number; xp_reward: number; enemy_damage: number; proof_type: string; success_requirements: Json; status: string; is_adaptive: boolean; completed_at: string | null; created_at: string; updated_at: string },
-        { id?: string; campaign_id: string; user_id: string; day_number: number; sequence_number: number; title: string; story_intro?: string | null; description: string; difficulty: string; estimated_minutes: number; xp_reward: number; enemy_damage: number; proof_type?: string; success_requirements: Json; status?: string; is_adaptive?: boolean; completed_at?: string | null; created_at?: string; updated_at?: string },
-        { status?: string; completed_at?: string | null; updated_at?: string }
+        { id: string; campaign_id: string; user_id: string; day_number: number; sequence_number: number; title: string; story_intro: string | null; description: string; difficulty: string; estimated_minutes: number; xp_reward: number; enemy_damage: number; proof_type: string; success_requirements: Json; status: string; is_adaptive: boolean; is_boss_quest: boolean; generation_contract_version: number; completed_at: string | null; created_at: string; updated_at: string },
+        { id?: string; campaign_id: string; user_id: string; day_number: number; sequence_number: number; title: string; story_intro?: string | null; description: string; difficulty: string; estimated_minutes: number; xp_reward: number; enemy_damage: number; proof_type?: string; success_requirements: Json; status?: string; is_adaptive?: boolean; is_boss_quest?: boolean; generation_contract_version?: number; completed_at?: string | null; created_at?: string; updated_at?: string },
+        { status?: string; is_boss_quest?: boolean; generation_contract_version?: number; completed_at?: string | null; updated_at?: string }
       >;
       quest_submissions: Table<
-        { id: string; quest_id: string; campaign_id: string; user_id: string; storage_path: string | null; proof_deleted_at: string | null; verification_status: string; verification_confidence: number | null; verification_reason: string | null; model_used: string | null; xp_awarded: number; enemy_damage_awarded: number; created_at: string; verified_at: string | null },
-        { id?: string; quest_id: string; campaign_id: string; user_id: string; storage_path: string | null; proof_deleted_at?: string | null; verification_status?: string; verification_confidence?: number | null; verification_reason?: string | null; model_used?: string | null; xp_awarded?: number; enemy_damage_awarded?: number; created_at?: string; verified_at?: string | null },
-        { storage_path?: string | null; proof_deleted_at?: string | null; verification_status?: string; verification_confidence?: number | null; verification_reason?: string | null; model_used?: string | null; verified_at?: string | null }
+        { id: string; quest_id: string; campaign_id: string; user_id: string; storage_path: string | null; proof_deleted_at: string | null; verification_status: string; verification_confidence: number | null; verification_reason: string | null; verification_result: Json | null; safety_status: string | null; trace_id: string | null; schema_validated: boolean | null; processing_token: string | null; processing_started_at: string | null; last_error_code: string | null; model_used: string | null; xp_awarded: number; enemy_damage_awarded: number; created_at: string; verified_at: string | null; updated_at: string },
+        { id?: string; quest_id: string; campaign_id: string; user_id: string; storage_path: string | null; proof_deleted_at?: string | null; verification_status?: string; verification_confidence?: number | null; verification_reason?: string | null; verification_result?: Json | null; safety_status?: string | null; trace_id?: string | null; schema_validated?: boolean | null; processing_token?: string | null; processing_started_at?: string | null; last_error_code?: string | null; model_used?: string | null; xp_awarded?: number; enemy_damage_awarded?: number; created_at?: string; verified_at?: string | null; updated_at?: string },
+        { storage_path?: string | null; proof_deleted_at?: string | null; verification_status?: string; verification_confidence?: number | null; verification_reason?: string | null; verification_result?: Json | null; safety_status?: string | null; trace_id?: string | null; schema_validated?: boolean | null; processing_token?: string | null; processing_started_at?: string | null; last_error_code?: string | null; model_used?: string | null; verified_at?: string | null; updated_at?: string }
       >;
       progress_events: Table<
         { id: string; user_id: string; campaign_id: string; quest_id: string | null; event_type: string; xp_change: number; enemy_health_change: number; metadata: Json | null; created_at: string },
@@ -45,6 +45,16 @@ export interface Database {
         { id?: string; event_name: string; trace_id: string; status: string; latency_ms?: number | null; error_code?: string | null; model?: string | null; metadata?: Json; created_at?: string },
         never
       >;
+      campaign_generation_requests: Table<
+        { id: string; user_id: string; generation_key: string; status: string; campaign_id: string | null; processing_token: string | null; processing_started_at: string | null; attempt_count: number; error_code: string | null; created_at: string; updated_at: string },
+        { id?: string; user_id: string; generation_key: string; status?: string; campaign_id?: string | null; processing_token?: string | null; processing_started_at?: string | null; attempt_count?: number; error_code?: string | null; created_at?: string; updated_at?: string },
+        { status?: string; campaign_id?: string | null; processing_token?: string | null; processing_started_at?: string | null; attempt_count?: number; error_code?: string | null; updated_at?: string }
+      >;
+      ai_usage_events: Table<
+        { id: string; user_id: string; operation: string; model: string; input_units: number | null; output_units: number | null; latency_ms: number; success: boolean; estimated_cost_microusd: number | null; trace_id: string; created_at: string },
+        { id?: string; user_id: string; operation: string; model: string; input_units?: number | null; output_units?: number | null; latency_ms: number; success: boolean; estimated_cost_microusd?: number | null; trace_id: string; created_at?: string },
+        never
+      >;
     };
     Views: Record<string, never>;
     Functions: {
@@ -53,11 +63,39 @@ export interface Database {
         Returns: string;
       };
       complete_quest: {
-        Args: { p_submission_id: string; p_confidence: number; p_reason: string; p_model_used: string };
+        Args: { p_submission_id: string; p_processing_token: string; p_result: Json; p_confidence: number; p_reason: string; p_model_used: string };
         Returns: Json;
       };
       consume_api_rate_limit: {
         Args: { p_identifier_hash: string; p_action: string; p_limit: number; p_window_seconds: number };
+        Returns: Json;
+      };
+      claim_quest_verification: {
+        Args: { p_submission_id: string; p_user_id: string; p_trace_id: string; p_stale_after_seconds?: number };
+        Returns: Json;
+      };
+      save_quest_verification_assessment: {
+        Args: { p_submission_id: string; p_processing_token: string; p_result: Json; p_safety_status: string; p_model_used: string; p_schema_validated: boolean };
+        Returns: boolean;
+      };
+      finalize_quest_verification: {
+        Args: { p_submission_id: string; p_processing_token: string; p_terminal_status: string; p_result: Json; p_error_code?: string | null };
+        Returns: Json;
+      };
+      claim_campaign_generation: {
+        Args: { p_user_id: string; p_generation_key: string; p_processing_token: string; p_stale_after_seconds?: number };
+        Returns: Json;
+      };
+      fail_campaign_generation: {
+        Args: { p_user_id: string; p_generation_key: string; p_processing_token: string; p_error_code: string };
+        Returns: boolean;
+      };
+      get_my_profile_aggregates: {
+        Args: Record<string, never>;
+        Returns: Json;
+      };
+      get_ai_usage_monthly_for_user: {
+        Args: { p_user_id: string };
         Returns: Json;
       };
     };

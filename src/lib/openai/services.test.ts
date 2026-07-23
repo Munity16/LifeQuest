@@ -17,7 +17,7 @@ const validCampaign = {
   enemyName: "Delay Demon",
   enemyDescription: "A shadow that feeds on postponed practice and unfinished lessons.",
   story: "Recover the foundations of Python through focused work and break the delay demon's hold.",
-  quests: [1, 2, 3].map((sequenceNumber) => ({
+  quests: [1, 2, 3, 4, 5, 6, 7].map((sequenceNumber) => ({
     dayNumber: sequenceNumber,
     sequenceNumber,
     title: `Python Quest ${sequenceNumber}`,
@@ -29,6 +29,7 @@ const validCampaign = {
     enemyDamage: 15,
     proofType: "image" as const,
     successRequirements: ["Python code and successful output are visible"],
+    isBossQuest: sequenceNumber === 7,
   })),
 };
 

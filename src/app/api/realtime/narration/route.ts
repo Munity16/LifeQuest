@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
+import { assertAiUsageAvailable, recordAiUsage } from "@/lib/ai-usage";
 import { getAuthContext } from "@/lib/auth";
 import { getQuest } from "@/lib/data";
 import { AppError, errorResponse } from "@/lib/errors";
@@ -13,6 +14,7 @@ const narrationQuerySchema = z.object({ campaignId: z.uuid(), questId: z.uuid() 
 export async function POST(request: Request) {
   const startedAt = performance.now();
   const traceId = crypto.randomUUID();
+  let realtimeAttempt: { userId: string; model: string } | null = null;
   try {
     const auth = await getAuthContext();
     if (auth.kind === "anonymous") throw new AppError("Sign in to use quest narration.", 401, "UNAUTHORIZED");
@@ -30,6 +32,8 @@ export async function POST(request: Request) {
     const offer = await request.text();
     if (!offer.startsWith("v=0") || offer.length > MAX_SDP_BYTES) throw new AppError("The SDP offer is invalid.", 400, "INVALID_SDP");
 
+    await assertAiUsageAvailable(auth.user.id, "realtime_narration");
+    realtimeAttempt = { userId: auth.user.id, model: getOpenAIRealtimeModel() };
     const session = {
       type: "realtime",
       model: getOpenAIRealtimeModel(),
@@ -56,12 +60,31 @@ export async function POST(request: Request) {
       throw new AppError("Quest narration could not connect. Please try again.", 502, "REALTIME_CONNECTION_FAILED");
     }
 
+    await recordAiUsage({
+      userId: auth.user.id,
+      operation: "realtime_narration",
+      model: getOpenAIRealtimeModel(),
+      traceId,
+      latencyMs: Math.max(0, Math.round(performance.now() - startedAt)),
+      success: true,
+    });
+    realtimeAttempt = null;
     await recordOperationalEvent({ eventName: "narration.connect", traceId, status: "success", latencyMs: Math.round(performance.now() - startedAt), model: getOpenAIRealtimeModel() });
     return new Response(await upstream.text(), {
       status: 200,
       headers: { "Content-Type": "application/sdp", "Cache-Control": "no-store" },
     });
   } catch (error) {
+    if (realtimeAttempt) {
+      await recordAiUsage({
+        userId: realtimeAttempt.userId,
+        operation: "realtime_narration",
+        model: realtimeAttempt.model,
+        traceId,
+        latencyMs: Math.max(0, Math.round(performance.now() - startedAt)),
+        success: false,
+      });
+    }
     await recordOperationalEvent({ eventName: "narration.connect", traceId, status: operationalStatus(error), latencyMs: Math.round(performance.now() - startedAt), errorCode: operationalErrorCode(error), model: getOpenAIRealtimeModel() });
     return errorResponse(error);
   }

@@ -60,7 +60,7 @@ export default async function HomePage() {
           <Link className="button button-primary button-large" href={signedIn ? "/onboarding" : "/signup"}>Begin now <ArrowRight size={18} /></Link>
         </section>
       </main>
-      <footer className="site-footer"><div className="page-shell"><span>LifeQuest</span><small>Built for focused, verifiable progress.</small></div></footer>
+      <footer className="site-footer"><div className="page-shell"><span>LifeQuest</span><small>Built for focused, verifiable progress. <Link href="/privacy">Privacy & proof handling</Link></small></div></footer>
     </div>
   );
 }

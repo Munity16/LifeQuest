@@ -29,6 +29,7 @@ function questFromRow(row: {
   success_requirements: Json;
   status: string;
   is_adaptive: boolean;
+  is_boss_quest: boolean;
   completed_at: string | null;
 }): QuestView {
   const difficulty = difficultySchema.safeParse(row.difficulty);
@@ -48,6 +49,7 @@ function questFromRow(row: {
     successRequirements: requirements.success ? requirements.data : ["A clear image showing the completed task"],
     status: (["locked", "available", "in_progress", "completed"].includes(row.status) ? row.status : "locked") as QuestStatus,
     isAdaptive: row.is_adaptive,
+    isBossQuest: row.is_boss_quest,
     completedAt: row.completed_at,
   };
 }
@@ -88,7 +90,7 @@ export async function getCampaign(campaignId: string): Promise<CampaignView | nu
     story: campaign.story,
     enemyMaxHealth: campaign.enemy_max_health,
     enemyCurrentHealth: campaign.enemy_current_health,
-    status: campaign.status === "won" ? "won" : campaign.status === "archived" ? "archived" : "active",
+    status: (["active", "paused", "won", "archived", "abandoned"].includes(campaign.status) ? campaign.status : "active") as CampaignView["status"],
     totalXp: profile.total_xp,
     currentLevel: profile.current_level,
     userEmail: authData.user.email ?? "Adventurer",

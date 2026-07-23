@@ -6,11 +6,19 @@ const mocks = vi.hoisted(() => ({
   getAuthContext: vi.fn(),
   generateCampaignWithAI: vi.fn(),
   persistGeneratedCampaign: vi.fn(),
+  claimCampaignGeneration: vi.fn(),
+  failCampaignGeneration: vi.fn(),
+  assertAiUsageAvailable: vi.fn(),
 }));
 
 vi.mock("@/lib/auth", () => ({ getAuthContext: mocks.getAuthContext }));
 vi.mock("@/lib/openai/services", () => ({ generateCampaignWithAI: mocks.generateCampaignWithAI }));
 vi.mock("@/lib/data", () => ({ persistGeneratedCampaign: mocks.persistGeneratedCampaign }));
+vi.mock("@/lib/generation-requests", () => ({
+  claimCampaignGeneration: mocks.claimCampaignGeneration,
+  failCampaignGeneration: mocks.failCampaignGeneration,
+}));
+vi.mock("@/lib/ai-usage", () => ({ assertAiUsageAvailable: mocks.assertAiUsageAvailable }));
 
 const input = { goal: "Learn Python fundamentals", dailyMinutes: 30, mainObstacle: "procrastination", difficulty: "balanced" };
 const generated = { campaignName: "Campaign", quests: [] };
@@ -26,6 +34,11 @@ beforeEach(() => {
   mocks.getAuthContext.mockResolvedValue({ kind: "user", user: { id: "user-1" } });
   mocks.generateCampaignWithAI.mockResolvedValue(generated);
   mocks.persistGeneratedCampaign.mockResolvedValue("22222222-2222-4222-8222-222222222222");
+  mocks.claimCampaignGeneration.mockResolvedValue({
+    state: "processing",
+    claimed: true,
+    processingToken: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  });
 });
 
 describe("POST /api/campaigns/generate", () => {
@@ -34,6 +47,7 @@ describe("POST /api/campaigns/generate", () => {
     expect(response.status).toBe(201);
     await expect(response.json()).resolves.toEqual({ campaignId: "22222222-2222-4222-8222-222222222222" });
     expect(mocks.persistGeneratedCampaign).toHaveBeenCalledWith("user-1", generationKey, input, generated);
+    expect(mocks.claimCampaignGeneration).toHaveBeenCalledBefore(mocks.generateCampaignWithAI);
   });
 
   it("rejects an unauthenticated request before calling OpenAI", async () => {
@@ -60,5 +74,26 @@ describe("POST /api/campaigns/generate", () => {
     const response = await POST(request());
     expect(response.status).toBe(500);
     await expect(response.json()).resolves.toMatchObject({ error: { code: "CAMPAIGN_SAVE_FAILED" } });
+    expect(mocks.failCampaignGeneration).toHaveBeenCalled();
+  });
+
+  it("returns a saved result without calling OpenAI for a duplicate key", async () => {
+    mocks.claimCampaignGeneration.mockResolvedValueOnce({
+      state: "succeeded",
+      claimed: false,
+      campaignId: "22222222-2222-4222-8222-222222222222",
+    });
+    const response = await POST(request());
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({ duplicate: true });
+    expect(mocks.generateCampaignWithAI).not.toHaveBeenCalled();
+  });
+
+  it("returns retryable processing state for a concurrent duplicate", async () => {
+    mocks.claimCampaignGeneration.mockResolvedValueOnce({ state: "processing", claimed: false });
+    const response = await POST(request());
+    expect(response.status).toBe(202);
+    expect(response.headers.get("Retry-After")).toBe("3");
+    expect(mocks.generateCampaignWithAI).not.toHaveBeenCalled();
   });
 });

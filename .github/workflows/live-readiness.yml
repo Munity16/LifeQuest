@@ -17,11 +17,13 @@ jobs:
       LIVE_E2E: "true"
       LIVE_E2E_USER_EMAIL: ${{ secrets.LIVE_E2E_USER_EMAIL }}
       LIVE_E2E_USER_PASSWORD: ${{ secrets.LIVE_E2E_USER_PASSWORD }}
+      LIVE_E2E_OTHER_USER_EMAIL: ${{ secrets.LIVE_E2E_OTHER_USER_EMAIL }}
+      LIVE_E2E_OTHER_USER_PASSWORD: ${{ secrets.LIVE_E2E_OTHER_USER_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20.19.0
+          node-version: 22
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium

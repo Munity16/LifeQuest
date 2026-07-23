@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { CircleCheck, CircleX, FileImage, ScanSearch, ShieldCheck, Trash2, UploadCloud, X } from "lucide-react";
@@ -24,6 +25,7 @@ function payloadMessage(payload: unknown) {
 function parseResult(payload: unknown): CompletionResult | null {
   if (typeof payload !== "object" || payload === null || !("verified" in payload) || typeof payload.verified !== "boolean") return null;
   const value = payload as Record<string, unknown>;
+  if (typeof value.verifiedAt !== "string") return null;
   const requirementsAssessment = Array.isArray(value.requirementsAssessment)
     ? value.requirementsAssessment.flatMap((item) => {
       if (typeof item !== "object" || item === null) return [];
@@ -47,6 +49,7 @@ function parseResult(payload: unknown): CompletionResult | null {
     : undefined;
   return {
     submissionId: typeof value.submissionId === "string" ? value.submissionId : undefined,
+    verifiedAt: value.verifiedAt,
     verified: typeof value.verified === "boolean" ? value.verified : false,
     duplicate: typeof value.duplicate === "boolean" ? value.duplicate : false,
     reason: typeof value.reason === "string" ? value.reason : "Verification finished.",
@@ -103,6 +106,25 @@ async function createDemoProof(outcome: "accepted" | "rejected") {
     context.fillText("OUTPUT CROPPED — REQUIREMENTS NOT VISIBLE", 76, 504);
   }
   return canvasToFile(canvas, `lifequest-demo-${outcome}.png`);
+}
+
+async function waitForVerification(questId: string, submissionId: string, demoOutcome?: "accepted" | "rejected") {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const response = await fetch(`/api/quests/${questId}/verify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ submissionId, demoOutcome }),
+    });
+    const payload: unknown = await response.json();
+    if (response.status === 202) {
+      const retrySeconds = Number(response.headers.get("Retry-After")) || 3;
+      await new Promise((resolve) => window.setTimeout(resolve, Math.min(5, retrySeconds) * 1_000));
+      continue;
+    }
+    if (!response.ok) throw new Error(payloadMessage(payload));
+    return payload;
+  }
+  throw new Error("Verification is still processing. Try again in a moment; your saved proof will not be charged twice.");
 }
 
 export function ProofUploader({ questId, completed, isDemo, existingProof }: { questId: string; completed: boolean; isDemo: boolean; existingProof: ProofRetentionSummary | null }) {
@@ -170,16 +192,13 @@ export function ProofUploader({ questId, completed, isDemo, existingProof }: { q
       if (typeof uploadPayload !== "object" || !uploadPayload || !("submissionId" in uploadPayload) || typeof uploadPayload.submissionId !== "string") throw new Error("The upload response was incomplete.");
 
       setState("verifying");
-      const verificationResponse = await fetch(`/api/quests/${questId}/verify`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          submissionId: uploadPayload.submissionId,
-          demoOutcome: isDemo && "demoOutcome" in uploadPayload ? uploadPayload.demoOutcome : undefined,
-        }),
-      });
-      const verificationPayload: unknown = await verificationResponse.json();
-      if (!verificationResponse.ok) throw new Error(payloadMessage(verificationPayload));
+      const verificationPayload = await waitForVerification(
+        questId,
+        uploadPayload.submissionId,
+        isDemo && "demoOutcome" in uploadPayload && (uploadPayload.demoOutcome === "accepted" || uploadPayload.demoOutcome === "rejected")
+          ? uploadPayload.demoOutcome
+          : undefined,
+      );
       const parsed = parseResult(verificationPayload);
       if (!parsed) throw new Error("The verification response was incomplete.");
       setProofDeletedAt(null);
@@ -280,7 +299,13 @@ export function ProofUploader({ questId, completed, isDemo, existingProof }: { q
         </div>
       )}
 
-      <div className="proof-privacy"><ShieldCheck size={15} /><span>Your private proof passes a safety check, then is evaluated only against this quest.</span></div>
+      <div className="proof-privacy">
+        <ShieldCheck size={15} />
+        <span>
+          Stored privately after location metadata is removed, then sent through safety and quest-only AI checks.
+          {" "}<Link href="/privacy#proofs">How proof privacy works</Link>
+        </span>
+      </div>
       {state === "idle" && !file && retentionControl}
       {error && <div className="form-error" role="alert" aria-live="polite">{error}</div>}
       {state === "rejected" && result && <><VerificationResult verified={false} reason={result.reason} result={result} onRetry={() => chooseFile(null)} />{retentionControl}</>}

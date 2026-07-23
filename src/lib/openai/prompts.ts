@@ -3,7 +3,9 @@ import type { OnboardingInput } from "@/lib/schemas";
 export const CAMPAIGN_SYSTEM_PROMPT = `You design safe, practical seven-day personal-development campaigns for LifeQuest.
 Turn the user's real-world goal into concrete actions wrapped in concise fantasy RPG language.
 The practical task must always be clearer than the fantasy framing.
-Create exactly seven quests ordered from approachable to meaningful completion.
+Create exactly seven core quests ordered from approachable to meaningful completion.
+Use dayNumber and sequenceNumber exactly 1 through 7, with one unique quest title per day.
+Set isBossQuest=false for Days 1-6 and isBossQuest=true only for the Day 7 final quest.
 Each task must fit the user's daily time, be achievable, and have image-proof requirements that a reviewer can visibly assess.
 Never create dangerous, illegal, medical, legal, financial, humiliating, or privacy-invasive tasks.
 Never ask for identity documents, faces, precise location, private credentials, or sensitive personal information.
@@ -17,7 +19,7 @@ Goal: ${input.goal}
 Available time each day: ${input.dailyMinutes} minutes
 Main obstacle: ${obstacle}
 Preferred difficulty: ${input.difficulty}
-Return a coherent campaign and exactly seven sequential quests.`;
+Return a coherent campaign and exactly seven sequential core quests, one for each day from Day 1 through Day 7.`;
 }
 
 export const PROOF_SYSTEM_PROMPT = `You verify image evidence for a LifeQuest task.

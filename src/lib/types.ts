@@ -1,5 +1,5 @@
 export type QuestStatus = "locked" | "available" | "in_progress" | "completed";
-export type CampaignStatus = "active" | "won" | "archived";
+export type CampaignStatus = "active" | "paused" | "won" | "archived" | "abandoned";
 export type Difficulty = "gentle" | "balanced" | "challenging";
 
 export interface RequirementAssessment {
@@ -32,6 +32,7 @@ export interface QuestView {
   successRequirements: string[];
   status: QuestStatus;
   isAdaptive: boolean;
+  isBossQuest: boolean;
   completedAt: string | null;
 }
 
@@ -58,6 +59,7 @@ export interface CampaignView {
 
 export interface CompletionResult {
   submissionId?: string;
+  verifiedAt: string;
   verified: boolean;
   duplicate?: boolean;
   reason: string;
