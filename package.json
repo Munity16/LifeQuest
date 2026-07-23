@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=20.19.0"
+    "node": "22.x"
   },
   "scripts": {
     "dev": "next dev",
@@ -13,7 +13,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test",
+    "test:e2e": "node scripts/run-e2e.mjs",
     "validate:production": "node scripts/check-production-env.mjs",
     "eval:proof": "node scripts/run-proof-evals.mjs",
     "eval:proof:validate": "node scripts/run-proof-evals.mjs --validate"
@@ -25,11 +25,13 @@
     "clsx": "^2.1.1",
     "framer-motion": "^12.42.2",
     "lucide-react": "^1.25.0",
-    "next": "^16.2.10",
+    "next": "^16.2.11",
     "openai": "^6.48.0",
+    "postcss": "8.5.10",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-hook-form": "^7.81.0",
+    "sharp": "0.35.0",
     "tailwind-merge": "^3.6.0",
     "zod": "^4.4.3"
   },
@@ -44,10 +46,14 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
     "eslint": "^9.39.5",
-    "eslint-config-next": "^16.2.10",
+    "eslint-config-next": "^16.2.11",
     "jsdom": "^29.1.1",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3",
     "vitest": "^4.1.10"
+  },
+  "overrides": {
+    "postcss": "8.5.10",
+    "sharp": "0.35.0"
   }
 }

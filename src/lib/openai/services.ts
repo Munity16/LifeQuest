@@ -10,6 +10,7 @@ import {
   type ProofVerification,
 } from "@/lib/schemas";
 import { AppError } from "@/lib/errors";
+import { assertAiUsageAvailable, recordAiUsage, type AiOperation } from "@/lib/ai-usage";
 import { getOpenAIClient, getOpenAIModerationModel, getOpenAIModel } from "@/lib/openai/client";
 import {
   ADAPTIVE_SYSTEM_PROMPT,
@@ -19,11 +20,40 @@ import {
 } from "@/lib/openai/prompts";
 import type { QuestView } from "@/lib/types";
 
-export async function generateCampaignWithAI(input: OnboardingInput): Promise<GeneratedCampaign> {
+interface AiCallContext {
+  userId: string;
+  traceId: string;
+}
+
+async function trackAiCall(
+  context: AiCallContext | undefined,
+  operation: AiOperation,
+  model: string,
+  startedAt: number,
+  success: boolean,
+  usage?: { input_tokens?: number; output_tokens?: number } | null,
+) {
+  if (!context) return;
+  await recordAiUsage({
+    userId: context.userId,
+    operation,
+    model,
+    traceId: context.traceId,
+    latencyMs: Math.max(0, Math.round(performance.now() - startedAt)),
+    success,
+    inputUnits: usage?.input_tokens,
+    outputUnits: usage?.output_tokens,
+  });
+}
+
+export async function generateCampaignWithAI(input: OnboardingInput, context?: AiCallContext): Promise<GeneratedCampaign> {
   const openai = getOpenAIClient();
   let lastError: unknown;
 
   for (let attempt = 0; attempt < 2; attempt += 1) {
+    if (context) await assertAiUsageAvailable(context.userId, "campaign_generation");
+    const startedAt = performance.now();
+    let usage: { input_tokens?: number; output_tokens?: number } | null | undefined;
     try {
       const response = await openai.responses.parse({
         model: getOpenAIModel(),
@@ -31,14 +61,17 @@ export async function generateCampaignWithAI(input: OnboardingInput): Promise<Ge
         input: campaignUserPrompt(input),
         text: { format: zodTextFormat(generatedCampaignSchema, "lifequest_campaign") },
       });
+      usage = response.usage;
 
       const generated = generatedCampaignSchema.parse(response.output_parsed);
       if (generated.quests.some((quest) => quest.estimatedMinutes > input.dailyMinutes)) {
         throw new Error("Generated quest exceeds the user's daily time limit.");
       }
+      await trackAiCall(context, "campaign_generation", getOpenAIModel(), startedAt, true, usage);
       return generated;
     } catch (error) {
       lastError = error;
+      await trackAiCall(context, "campaign_generation", getOpenAIModel(), startedAt, false, usage);
     }
   }
 
@@ -58,8 +91,9 @@ export interface ProofModerationResult {
   model: string;
 }
 
-export async function moderateProofImage(imageDataUrl: string): Promise<ProofModerationResult> {
+export async function moderateProofImage(imageDataUrl: string, context?: AiCallContext): Promise<ProofModerationResult> {
   const openai = getOpenAIClient();
+  const startedAt = performance.now();
   try {
     const response = await openai.moderations.create({
       model: getOpenAIModerationModel(),
@@ -70,18 +104,23 @@ export async function moderateProofImage(imageDataUrl: string): Promise<ProofMod
     const categories = Object.entries(result.categories)
       .filter(([, flagged]) => flagged)
       .map(([category]) => category);
+    await trackAiCall(context, "proof_moderation", response.model, startedAt, true);
     return { flagged: result.flagged, categories, requestId: response.id, model: response.model };
   } catch (error) {
+    await trackAiCall(context, "proof_moderation", getOpenAIModerationModel(), startedAt, false);
     console.error("Proof safety screening failed", error);
     throw new AppError("Proof safety screening is temporarily unavailable. Your image is saved; please retry.", 502, "AI_MODERATION_FAILED");
   }
 }
 
-export async function verifyProofWithAI(input: VerifyProofInput): Promise<ProofVerification> {
+export async function verifyProofWithAI(input: VerifyProofInput, context?: AiCallContext): Promise<ProofVerification> {
   const openai = getOpenAIClient();
   let lastError: unknown;
 
   for (let attempt = 0; attempt < 2; attempt += 1) {
+    if (context) await assertAiUsageAvailable(context.userId, "proof_verification");
+    const startedAt = performance.now();
+    let usage: { input_tokens?: number; output_tokens?: number } | null | undefined;
     try {
       const requirements = input.quest.successRequirements.map((item, index) => `${index + 1}. ${item}`).join("\n");
       const response = await openai.responses.parse({
@@ -101,6 +140,7 @@ export async function verifyProofWithAI(input: VerifyProofInput): Promise<ProofV
         ],
         text: { format: zodTextFormat(proofVerificationSchema, "proof_verification") },
       });
+      usage = response.usage;
 
       const verification = proofVerificationSchema.parse(response.output_parsed);
       if (verification.requirementsAssessment.length !== input.quest.successRequirements.length) {
@@ -109,9 +149,11 @@ export async function verifyProofWithAI(input: VerifyProofInput): Promise<ProofV
       if (verification.verified && verification.requirementsAssessment.some((item) => !item.satisfied)) {
         throw new Error("Proof result is inconsistent with its requirement assessments.");
       }
+      await trackAiCall(context, "proof_verification", getOpenAIModel(), startedAt, true, usage);
       return verification;
     } catch (error) {
       lastError = error;
+      await trackAiCall(context, "proof_verification", getOpenAIModel(), startedAt, false, usage);
     }
   }
 
@@ -130,8 +172,11 @@ interface AdaptiveQuestInput {
   progressPercentage: number;
 }
 
-export async function generateAdaptiveQuestWithAI(input: AdaptiveQuestInput) {
+export async function generateAdaptiveQuestWithAI(input: AdaptiveQuestInput, context?: AiCallContext) {
   const openai = getOpenAIClient();
+  if (context) await assertAiUsageAvailable(context.userId, "adaptive_generation");
+  const startedAt = performance.now();
+  let usage: { input_tokens?: number; output_tokens?: number } | null | undefined;
   try {
     const response = await openai.responses.parse({
       model: getOpenAIModel(),
@@ -147,9 +192,13 @@ Existing quest titles: ${input.existingTitles.join(" | ")}
 Create one logically connected, non-duplicate next action.`,
       text: { format: zodTextFormat(adaptiveQuestSchema, "adaptive_quest") },
     });
+    usage = response.usage;
 
-    return adaptiveQuestSchema.parse(response.output_parsed);
+    const parsed = adaptiveQuestSchema.parse(response.output_parsed);
+    await trackAiCall(context, "adaptive_generation", getOpenAIModel(), startedAt, true, usage);
+    return parsed;
   } catch (error) {
+    await trackAiCall(context, "adaptive_generation", getOpenAIModel(), startedAt, false, usage);
     console.error("Non-critical adaptive quest generation failed", error);
     return null;
   }

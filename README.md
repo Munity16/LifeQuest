@@ -2,248 +2,172 @@
 
 # LifeQuest
 
-### Turn a real goal into an adventure you can finish.
+### Turn one meaningful goal into a focused seven-day adventure.
 
-LifeQuest transforms practical goals into focused role-playing campaigns. Complete quests, submit private proof, defeat the obstacle standing in your way, and watch your hero grow.
+LifeQuest combines practical daily actions with a calm, dark-fantasy RPG layer. Forge seven quests, submit private proof, earn server-authoritative XP, weaken a symbolic enemy, and finish what you started.
 
-<a href="https://nextjs.org/"><kbd>Next.js 16</kbd></a>
-<a href="https://www.typescriptlang.org/"><kbd>TypeScript · strict</kbd></a>
-<a href="https://platform.openai.com/"><kbd>OpenAI · Responses API</kbd></a>
-<a href="#quality-gate"><kbd>✓ 64 tests</kbd></a>
+[![Next.js 16](https://img.shields.io/badge/Next.js-16-111827?style=flat-square&logo=next.js)](https://nextjs.org/)
+[![Node 22](https://img.shields.io/badge/Node.js-22-3c873a?style=flat-square&logo=node.js)](https://nodejs.org/)
+[![TypeScript strict](https://img.shields.io/badge/TypeScript-strict-3178c6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
+[![OpenAI](https://img.shields.io/badge/OpenAI-Responses%20API-6e56cf?style=flat-square&logo=openai)](https://platform.openai.com/)
 
-[Explore the game loop](#the-adventure-loop) · [View features](#what-awaits) · [Run locally](#quick-start) · [Deploy](#deployment)
+[Game loop](#the-adventure-loop) · [Features](#release-1-trust-foundation) · [Run locally](#run-locally) · [Privacy](docs/PRIVACY_AND_PROOF_FLOW.md) · [Roadmap](docs/LIFEQUEST_V2_ROADMAP.md)
 
 </div>
 
 <div align="center">
-
-<img src="public/readme/lifequest-walkthrough.gif" alt="Animated walkthrough of LifeQuest from goal onboarding through campaign progression" width="800" />
-
-<sub>Goal onboarding → campaign map → private proof → progression → hero customization</sub>
-
+  <img src="public/readme/lifequest-walkthrough.gif" alt="LifeQuest walkthrough from goal onboarding to campaign progression and hero customization" width="820" />
+  <br />
+  <sub>Goal onboarding → seven-day campaign → private proof → verified progression → hero customization</sub>
 </div>
-
-<details>
-<summary><strong>Enter the seeded realm</strong></summary>
-
-<br />
-
-<div align="center">
-
-<img src="public/art/kingdom-python.webp" alt="The fantasy realm of LifeQuest" width="800" />
-
-<sub>The Kingdom of Python—the deterministic demonstration campaign.</sub>
-
-</div>
-
-</details>
-
----
 
 ## The adventure loop
 
 ```mermaid
 flowchart LR
-    A[Choose a real goal] --> B[Forge an AI campaign]
-    B --> C[Complete a practical quest]
-    C --> D[Submit private image proof]
-    D --> E{Server verification}
-    E -->|Accepted| F[Earn XP and damage the enemy]
-    E -->|Try again| C
-    F --> G[Unlock the next path]
-    G --> C
+  A["Choose one real goal"] --> B["Forge exactly seven core quests"]
+  B --> C["Complete today's practical action"]
+  C --> D["Submit sanitized private proof"]
+  D --> E{"Server verification"}
+  E -->|Accepted| F["Award XP and damage once"]
+  E -->|Try again| C
+  F --> G["Unlock the next day"]
+  G --> C
 ```
 
-The progression path is intentionally focused:
+The fantasy framing supports the work; it never replaces clear practical instructions.
 
-1. Sign in or enter the explicitly enabled seeded demo.
-2. Describe a goal, available daily time, main obstacle, and preferred difficulty.
-3. Generate and atomically save a campaign with practical quests.
-4. Complete a quest and upload private screenshot or image proof.
-5. Verify the proof on the server against every success requirement.
-6. Apply XP, level, and enemy-health progression exactly once.
-7. Reload and continue from the same saved state.
+## Release 1 trust foundation
 
-## What awaits
-
-| | Experience |
+| Capability | What it guarantees |
 | --- | --- |
-| 🗺️ **AI-forged campaigns** | GPT-5.6 turns goals and constraints into a hero, nemesis, story, and bounded practical questline. |
-| ⚔️ **Visible progression** | XP, levels, enemy health, completion history, achievements, and a connected adventure map make progress tangible. |
-| 🔎 **Explainable proof checks** | Every accepted or rejected result includes requirement-by-requirement reasoning and a privacy-safe verification receipt. |
-| 🛡️ **Server-authoritative rewards** | Browsers never decide XP or damage. Progression runs through an idempotent, row-locking database function. |
-| 🎙️ **Quest narration** | Server-mediated OpenAI Realtime narration keeps credentials off the client; demo speech is clearly labelled device audio. |
-| 🎨 **Hero Workshop** | Choose from five realm themes, five archetypes, earned titles, crests, accents, and accessibility preferences. |
-| 📱 **Responsive adventure UI** | Keyboard support, visible focus, reduced motion, semantic controls, and layouts tested down to 320px. |
-| 🧪 **Reliable presentation mode** | Deterministic accepted and rejected proof samples demonstrate the full loop without presenting simulated behavior as live AI. |
+| Verification leases and receipts | One submission cannot be evaluated concurrently. Accepted and rejected terminal receipts are reusable and immutable. |
+| Server-authoritative progression | XP, levels, enemy damage, unlocks, and victory events are applied in one row-locking, service-role-only database function. |
+| Seven-day contract | Zod and Postgres enforce seven ordered core quests, unique days and titles, bounded time/rewards, and a Day 7 boss for new V2 campaigns. |
+| Safe proof processing | The server validates signatures, decodes files with Sharp, removes metadata, corrects orientation, bounds dimensions, and stores only normalized JPEG output. |
+| Private proof lifecycle | Proofs use a private user/campaign/quest path, can be deleted immediately, and expire through a protected retention job. |
+| Generation cost guard | A generation key is claimed before the model call, so browser retries cannot create or pay for duplicate campaigns. |
+| Usage controls | Privacy-safe, user-scoped monthly counters cover generation, moderation, proof verification, narration, and future adaptive generation. |
+| Accurate Hero record | Lifetime aggregates come from a secure aggregate function, while campaign history is independently paginated. |
+| Deterministic demo | Presentation mode is explicitly enabled and labelled; it never presents seeded results as live AI. |
 
-## Choose your hero
+## Product experience
+
+- Original dark storybook interface with a connected campaign map, enemy health, hero XP, achievements, and responsive mobile navigation.
+- Five realm themes and hero archetypes, earned titles, accents, high contrast, larger text, compact density, and reduced-motion support.
+- Structured OpenAI campaign generation and proof verification with bounded schemas.
+- Server-mediated Realtime quest narration; the API key never reaches the browser.
+- Clear accepted and rejected requirement assessments with privacy-safe AI receipts.
+- Keyboard-friendly dialogs, visible focus, semantic form controls, and layouts designed down to 320px.
+
+<details>
+<summary><strong>Seeded demonstration realm</strong></summary>
 
 <div align="center">
-
-| Scholar | Knight | Mage | Ranger | Rogue |
-| :---: | :---: | :---: | :---: | :---: |
-| <img src="public/art/code-apprentice.webp" alt="Scholar hero" width="130" /> | <img src="public/art/hero-knight.webp" alt="Knight hero" width="130" /> | <img src="public/art/hero-mage.webp" alt="Mage hero" width="130" /> | <img src="public/art/hero-ranger.webp" alt="Ranger hero" width="130" /> | <img src="public/art/hero-rogue.webp" alt="Rogue hero" width="130" /> |
-
+  <br />
+  <img src="public/art/kingdom-python.webp" alt="Original fantasy ruins used for the LifeQuest Kingdom of Python demo" width="800" />
+  <br />
+  <sub>The Kingdom of Python is deterministic demonstration content.</sub>
 </div>
 
-Hero settings preview instantly and apply across the profile, campaign HUD, quest screens, narration controls, and victory feedback. Live users store preferences on their RLS-protected profile; the seeded demo uses a private HTTP-only cookie.
+</details>
 
-## Technology
+## Architecture
 
-| Layer | Technology |
+| Boundary | Technology and responsibility |
 | --- | --- |
-| Application | Next.js 16 App Router, React 19, strict TypeScript |
-| Interface | Tailwind CSS 4, product-specific responsive CSS, Framer Motion, Lucide icons |
-| Data and authentication | Supabase Postgres, Authentication, Row Level Security, private Storage |
-| Intelligence | OpenAI JavaScript SDK, Responses API, GPT-5.6, image input, Structured Outputs, Realtime API |
-| Validation and forms | Zod, React Hook Form |
-| Quality | Vitest, Testing Library, SQL security-contract tests, private proof-evaluation runner |
-| Hosting target | Vercel |
+| Web application | Next.js 16 App Router, React 19, strict TypeScript |
+| UI | Tailwind CSS 4 plus semantic product CSS, Framer Motion, Lucide |
+| Identity and data | Supabase Auth, Postgres, RLS, private Storage |
+| AI | OpenAI Responses API, Structured Outputs, image moderation, Realtime |
+| Validation | Zod at browser, route, database-result, and AI boundaries |
+| Tests | Vitest, Testing Library, SQL contract tests, Playwright |
+| Deployment target | Vercel on Node 22 |
 
-## Quick start
+See [LifeQuest V2 Architecture](docs/LIFEQUEST_V2_ARCHITECTURE.md) for the trust boundaries and request sequences.
+
+## Run locally
 
 ### Prerequisites
 
-- Node.js 20.19 or newer
+- Node.js 22
 - npm
-- A Supabase project for the live path
-- An OpenAI API key with access to the configured models for the live path
-
-### Install and run
+- Supabase and OpenAI credentials only for the live path
 
 ```bash
 git clone https://github.com/Munity16/LifeQuest.git
 cd LifeQuest
-npm install
+npm ci
 cp .env.example .env.local
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
-
-On Windows PowerShell:
+Windows PowerShell:
 
 ```powershell
 Copy-Item .env.example .env.local
-npm.cmd install
+npm.cmd ci
 npm.cmd run dev
 ```
 
-LifeQuest builds without live credentials. Configure `.env.local` for the live path, or explicitly enable the labelled seeded demo. Never commit `.env.local`.
+Open [http://localhost:3000](http://localhost:3000). The app builds without live credentials. Set `DEMO_MODE_ENABLED=true` only when the visibly labelled seeded demo is intended. Never commit `.env.local`.
 
 ## Configuration
 
-<details>
-<summary><strong>Environment variables</strong></summary>
-
-| Variable | Required | Purpose |
+| Variable | Scope | Purpose |
 | --- | --- | --- |
-| `NEXT_PUBLIC_APP_URL` | Yes | Canonical application origin used for authentication callbacks. |
-| `NEXT_PUBLIC_SUPABASE_URL` | Live path | Supabase project URL; safe for browser use. |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Live path | Supabase anonymous key; safe for browser use when RLS is enforced. |
-| `SUPABASE_SERVICE_ROLE_KEY` | Live path | Server-only key for controlled campaign, submission, and progression mutations. |
-| `OPENAI_API_KEY` | Live path | Server-only OpenAI credential. |
-| `OPENAI_MODEL` | Live path | Defaults to `gpt-5.6`. |
-| `OPENAI_MODERATION_MODEL` | Live path | Defaults to `omni-moderation-latest` for proof-image safety screening. |
-| `OPENAI_REALTIME_MODEL` | Live voice | Defaults to `gpt-realtime-2.1` for quest narration. |
-| `DEMO_MODE_ENABLED` | Demo only | The seeded fallback exists only when this value is exactly `true`. |
-| `DEMO_USER_EMAIL` | Optional | Reserved for a separately managed demo account. |
-| `DEMO_USER_PASSWORD` | Optional | Reserved server-side for a separately managed demo account. |
-| `RATE_LIMIT_SALT` | Production | Server-only random value, at least 32 characters, used before hashing rate-limit identifiers. |
-| `CRON_SECRET` | Production | Server-only random value, at least 32 characters, protecting the retention cleanup route. |
-| `PROOF_RETENTION_DAYS` | Production | Number of days to retain proof objects; defaults to `30`. |
-| `TELEMETRY_ENABLED` | Optional | Set to `false` to disable privacy-safe operational event persistence. |
+| `NEXT_PUBLIC_APP_URL` | Required | Canonical origin for auth callbacks |
+| `NEXT_PUBLIC_SUPABASE_URL` | Live | Browser-safe Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Live | Browser-safe anonymous key; RLS remains mandatory |
+| `SUPABASE_SERVICE_ROLE_KEY` | Live, server only | Controlled mutation and operational functions |
+| `OPENAI_API_KEY` | Live, server only | OpenAI credential |
+| `OPENAI_MODEL` | Live | Structured generation and verification model |
+| `OPENAI_MODERATION_MODEL` | Live | Image safety model |
+| `OPENAI_REALTIME_MODEL` | Live voice | Quest narration model |
+| `AI_MONTHLY_*_LIMIT` | Live | Per-operation monthly request ceilings |
+| `DEMO_MODE_ENABLED` | Demo | Must be exactly `true` to enable seeded behavior |
+| `RATE_LIMIT_SALT` | Production | Secret salt for hashed rate-limit subjects |
+| `CRON_SECRET` | Production | Protects proof-retention cleanup |
+| `PROOF_RETENTION_DAYS` | Production | Proof-object lifetime; defaults to 30 days |
+| `TELEMETRY_ENABLED` | Optional | Enables privacy-safe operational events |
 
-Live endpoints return explicit configuration errors when their required server credentials are absent.
+Run `npm run validate:production` in a configured production environment.
 
-</details>
+## Database setup
 
-<details>
-<summary><strong>Supabase migrations and policies</strong></summary>
-
-Apply the migrations in `supabase/migrations` in order:
+Apply every SQL file in `supabase/migrations` in filename order:
 
 1. `202607170001_initial_schema.sql`
-   - Creates profiles, campaigns, quests, submissions, progress events, RLS policies, and the private `quest-proofs` bucket.
 2. `202607170002_secure_server_mutations.sql`
-   - Adds idempotent campaign creation and replaces progression with atomic, service-role-only database functions.
 3. `202607190003_profile_appearance.sql`
-   - Adds validated JSON appearance preferences to the user's RLS-protected profile.
 4. `202607190004_production_hardening.sql`
-   - Adds proof-deletion receipts, hashed service-only API rate limits, and privacy-safe operational events.
+5. `202607230005_v2_trust_correctness.sql`
 
-If the project is linked with the Supabase CLI:
+The second migration removes the browser-callable legacy progression grant. The fifth adds verification/generation leases, V2 quest validation, lifetime aggregates, and user-scoped AI usage records. Do not skip or reorder migrations.
+
+With a linked Supabase project:
 
 ```bash
 supabase db push
 ```
 
-Alternatively, run each migration in order in the Supabase SQL Editor. Do not skip the second migration: it removes the browser-callable progression permission present in the initial scaffold.
+Before launch, complete the [Live Readiness Checklist](docs/LIVE_READINESS_CHECKLIST.md).
 
-Confirm before going live:
+## Proof privacy
 
-- RLS is enabled on all public tables.
-- Users can read only their own records.
-- Only `service_role` can execute `create_campaign_with_quests` and `complete_quest`.
-- Only `service_role` can consume the database-backed API rate limiter or write operational events.
-- The proof bucket is private, limited to 5 MB JPG/PNG/WebP files, and scoped to `{userId}/{campaignId}/{questId}/{filename}`.
-- Local and production `/auth/callback` URLs are present in the Supabase redirect allowlist.
+1. The browser uploads a supported image of at most 5 MB.
+2. The server checks its MIME type and byte signature.
+3. Sharp decodes, rotates, bounds, and re-encodes it without EXIF/GPS metadata.
+4. Only the sanitized JPEG is written to private Storage.
+5. The sanitized image is sent to the configured AI provider for safety and quest-only evaluation.
+6. The user can delete the image while the decision receipt and earned progression remain.
 
-</details>
-
-## System boundaries
-
-### Proof verification
-
-The live verification path uses the official OpenAI JavaScript SDK:
-
-1. Validate the private file path, declared MIME type, byte signature, size, quest ownership, and quest state.
-2. Moderate the image before assessment.
-3. Send the task requirements and high-detail private image to GPT-5.6.
-4. Parse a bounded Zod Structured Output with a verdict and assessment for every requirement.
-5. Reject low-confidence or incomplete results.
-6. Apply rewards through the idempotent service-role progression function.
-
-Receipts expose mode, model, latency, safety outcome, schema state, and application trace ID without logging proof bytes, data URLs, secrets, or private model reasoning.
-
-### Production protection and privacy
-
-- Authentication, generation, proof upload/verification/deletion, and narration routes enforce per-window limits. Production identifiers are salted and SHA-256 hashed before storage.
-- Operational events use an allowlisted schema containing event type, status, latency, error code, model, and numeric/boolean metadata only—never raw IPs, emails, user IDs, goals, prompts, or proof content.
-- Users can delete a stored proof immediately without removing the verification receipt or earned progression.
-- Vercel invokes the protected retention route daily; proof objects older than `PROOF_RETENTION_DAYS` are removed in bounded batches.
-
-### Campaign generation
-
-Campaign generation uses `responses.parse` with `zodTextFormat`, bounded retries, consecutive quest validation, difficulty-specific reward bands, and an atomic campaign-and-quest database function.
-
-### Narration
-
-The browser sends a WebRTC offer to a server route that authorizes the OpenAI Realtime session. The OpenAI API key never reaches the browser, and no microphone permission is required.
-
-## Seeded demo mode
-
-Enable the labelled fallback only where it is intended:
-
-```env
-DEMO_MODE_ENABLED=true
-```
-
-The seeded demo:
-
-- Loads a pre-generated **Kingdom of Python** campaign.
-- Stores progress and appearance settings in private HTTP-only cookies for eight hours.
-- Provides deterministic accepted and rejected proof samples generated in the browser.
-- Offers a one-click reset for demo progression.
-- Uses clearly labelled device speech instead of calling OpenAI Realtime.
-- Never describes fallback behavior as live AI.
-
-For a live demonstration, configure Supabase and OpenAI, sign in with a real test account, and disable demo mode.
+Read the [full proof flow](docs/PRIVACY_AND_PROOF_FLOW.md) or the in-app `/privacy` page.
 
 ## Quality gate
 
 ```bash
+npm ci
 npm run lint
 npm run typecheck
 npm run test
@@ -251,76 +175,28 @@ npm run test:e2e
 npm run build
 ```
 
-The automated suite currently contains **68 passing Vitest tests** plus Chromium coverage for the complete seeded golden path and 320px campaign/quest layouts. GitHub Actions runs the strict quality gate and browser suite on every pull request and push to `main`.
-
-### Private proof evaluation
-
-The repository includes an eight-case JSONL manifest without proof files. Validate it with:
-
-```bash
-npm run eval:proof:validate
-```
-
-To run a live private evaluation, add sanitized images under the Git-ignored `evals/proofs/` directory, configure `OPENAI_API_KEY`, and run:
-
-```bash
-npm run eval:proof -- --output evals/reports/proof-verification.json
-```
-
-Proof images and generated reports remain ignored. No live evaluation score is claimed until the private image set and production account have been exercised.
+CI uses Node 22 and uploads Playwright diagnostics when the browser suite fails. Live checks are a separate, manually triggered staging workflow and are skipped unless `LIVE_E2E=true` plus staging credentials are supplied.
 
 ## Deployment
 
-1. Import the repository into Vercel as a Next.js project.
-2. Keep the default build command: `npm run build`.
-3. Configure production environment variables without exposing server secrets through `NEXT_PUBLIC_` names.
-4. Set `NEXT_PUBLIC_APP_URL` to the final HTTPS origin.
-5. Apply all four Supabase migrations.
-6. Add the production `/auth/callback` URL to the Supabase redirect allowlist.
-7. Confirm the storage bucket and RLS policies.
-8. Run `npm run validate:production` in the configured production environment.
-9. Deploy and run the manual verification checklist below with a fresh test user.
-10. Disable demo mode for normal production use unless the visibly labelled fallback is intentional.
+1. Import the repository into Vercel and select Node 22.
+2. Add production environment variables; never prefix server secrets with `NEXT_PUBLIC_`.
+3. Apply all five migrations to the target Supabase project.
+4. Add the HTTPS `/auth/callback` URL to the Supabase redirect allowlist.
+5. Confirm RLS, private bucket policies, cron secret, and retention schedule.
+6. Run `npm run validate:production`, deploy, then execute the staging live-readiness workflow.
+7. Keep demo mode disabled unless its visible demonstration label is intentional.
 
-**Live URL:** not assigned in this repository yet; add the final Vercel HTTPS origin here and to the GitHub About section after the external project is created.
+No live deployment is claimed by this repository.
 
-<details>
-<summary><strong>Manual live verification checklist</strong></summary>
+## Roadmap and limitations
 
-1. Create and confirm a test account.
-2. Submit “Learn Python fundamentals in seven days” with 30 minutes, Procrastination, and Balanced difficulty.
-3. Confirm the campaign and quests exist in Supabase and survive refresh.
-4. Upload a supported private proof image under 5 MB.
-5. Confirm its storage path and ownership scope.
-6. Verify the proof and confirm exactly one XP award, one health reduction, and one completion event.
-7. Retry the verification request and confirm progression does not change.
-8. Sign in as another user and confirm the first user's records and proof object remain inaccessible.
-9. Delete the stored proof and confirm the receipt and progression remain while the private object no longer downloads.
-10. Trigger the `Live readiness` GitHub workflow against staging and confirm authentication, generation, persistence, and refresh.
+Release 1 addresses local trust and correctness. The Today dashboard, multiple completion methods, lifecycle controls, Daily Training, Chronicle, coins, domains, and grounded companion belong to later releases and are not represented as complete. See [LifeQuest V2 Roadmap](docs/LIFEQUEST_V2_ROADMAP.md).
 
-</details>
-
-## Current limitations
-
-- Live OpenAI, Supabase, storage, RLS, and Vercel behavior still require verification against the target services and credentials.
-- The private proof-evaluation image set and live model scores are intentionally absent from the repository.
-- Seeded demo progress uses HTTP-only cookies rather than Supabase.
-- The scheduled retention route is implemented but cannot run until a Vercel project, `CRON_SECRET`, and the fourth migration are configured.
-- Adaptive quest generation is best-effort and cannot block or undo progression.
-- Authentication currently supports Supabase email and password.
-- LifeQuest is a focused MVP, not a medical, financial, legal, or safety-critical task system.
-
-## Roadmap
-
-- Deploy the configured Vercel/Supabase/OpenAI staging environment and record the live golden-path results.
-- Exercise the manual two-user RLS/storage isolation and accepted/rejected private proof pair.
-- Evaluate adaptive quest quality against representative goals before enabling it broadly.
-- Add the final deployment URL after the external Vercel project is assigned.
-
----
+Live Supabase, Storage, OpenAI, RLS-isolation, and Vercel behavior still require target credentials and an isolated staging deployment. Private proof-evaluation images and reports are intentionally excluded from Git.
 
 <div align="center">
 
-**Choose a goal. Begin the quest. Defeat what stands in your way.**
+**Choose a goal. Begin the quest. Finish the seven-day path.**
 
 </div>

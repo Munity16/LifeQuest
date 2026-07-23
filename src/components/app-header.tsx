@@ -21,7 +21,7 @@ export function AppHeader({
           <BrandMark personalized={!publicNav} />
           {publicNav ? (
             <nav className="header-nav" aria-label="Primary navigation">
-              <a href="#how-it-works"><ScrollText size={15} aria-hidden="true" /> Game loop</a>
+              <Link href="/#how-it-works"><ScrollText size={15} aria-hidden="true" /> Game loop</Link>
               <Link href="/login">Sign in</Link>
               <Link href="/signup" className="nav-cta"><Swords size={15} aria-hidden="true" /> Begin adventure</Link>
             </nav>

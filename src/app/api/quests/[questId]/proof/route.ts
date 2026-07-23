@@ -2,7 +2,7 @@ import { z } from "zod";
 import { getAuthContext } from "@/lib/auth";
 import { getDemoCampaign } from "@/lib/demo-data";
 import { AppError, errorResponse } from "@/lib/errors";
-import { extensionForMimeType, hasValidImageSignature, validateProofFile } from "@/lib/proof-files";
+import { hasValidImageSignature, sanitizeProofImage, validateProofFile } from "@/lib/proof-files";
 import { safeFilename } from "@/lib/utils";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -51,9 +51,10 @@ export async function POST(request: Request, context: { params: Promise<{ questI
     if (quest.status === "completed") throw new AppError("This quest is already complete.", 409, "ALREADY_COMPLETED");
     if (quest.status === "locked") throw new AppError("Complete an available quest before submitting proof here.", 409, "QUEST_LOCKED");
 
-    const storagePath = `${auth.user.id}/${quest.campaign_id}/${quest.id}/${safeFilename(extensionForMimeType(file.type))}`;
-    const { error: uploadError } = await supabase.storage.from("quest-proofs").upload(storagePath, bytes, {
-      contentType: file.type,
+    const sanitized = await sanitizeProofImage(bytes);
+    const storagePath = `${auth.user.id}/${quest.campaign_id}/${quest.id}/${safeFilename(sanitized.extension)}`;
+    const { error: uploadError } = await supabase.storage.from("quest-proofs").upload(storagePath, sanitized.bytes, {
+      contentType: sanitized.mimeType,
       upsert: false,
     });
     if (uploadError) {
@@ -74,7 +75,7 @@ export async function POST(request: Request, context: { params: Promise<{ questI
     }
 
     await recordOperationalEvent({ eventName: "proof.upload", traceId, status: "success", latencyMs: Math.round(performance.now() - startedAt), metadata: { demo: false } });
-    return Response.json({ submissionId: submission.id }, { status: 201 });
+    return Response.json({ submissionId: submission.id, sanitized: true }, { status: 201 });
   } catch (error) {
     await recordOperationalEvent({ eventName: "proof.upload", traceId, status: operationalStatus(error), latencyMs: Math.round(performance.now() - startedAt), errorCode: operationalErrorCode(error) });
     return errorResponse(error);

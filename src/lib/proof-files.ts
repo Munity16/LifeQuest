@@ -1,5 +1,13 @@
+import "server-only";
+
+// @ts-expect-error sharp 0.35.0 omits its bundled type entry from the package exports map.
+import sharp from "sharp";
 import { ACCEPTED_IMAGE_TYPES, MAX_PROOF_BYTES } from "@/lib/config";
 import { AppError } from "@/lib/errors";
+
+const MAX_IMAGE_PIXELS = 40_000_000;
+const MAX_IMAGE_EDGE = 2_400;
+const MAX_SANITIZED_BYTES = 3 * 1024 * 1024;
 
 export function validateProofFile(value: FormDataEntryValue | null): asserts value is File {
   if (!(value instanceof File)) {
@@ -38,4 +46,48 @@ export function extensionForMimeType(mimeType: string) {
   if (mimeType === "image/png") return "png";
   if (mimeType === "image/webp") return "webp";
   return "jpg";
+}
+
+export async function sanitizeProofImage(bytes: Uint8Array) {
+  try {
+    const options = {
+      failOn: "error",
+      limitInputPixels: MAX_IMAGE_PIXELS,
+    } as const;
+    const metadata = await sharp(bytes, { ...options, animated: true }).metadata();
+    if (!metadata.width || !metadata.height || (metadata.pages ?? 1) !== 1) {
+      throw new AppError("Use a single-frame JPG, PNG, or WebP image.", 400, "UNSAFE_IMAGE_CONTENT");
+    }
+
+    const image = sharp(bytes, { ...options, animated: false });
+    const sanitized = await image
+      .rotate()
+      .resize({
+        width: MAX_IMAGE_EDGE,
+        height: MAX_IMAGE_EDGE,
+        fit: "inside",
+        withoutEnlargement: true,
+      })
+      .jpeg({ quality: 85, mozjpeg: true })
+      .toBuffer({ resolveWithObject: true });
+
+    if (sanitized.data.byteLength > MAX_SANITIZED_BYTES) {
+      throw new AppError("The image is too detailed to process safely. Try a smaller crop.", 400, "SANITIZED_IMAGE_TOO_LARGE");
+    }
+
+    return {
+      bytes: sanitized.data,
+      mimeType: "image/jpeg" as const,
+      extension: "jpg" as const,
+      width: sanitized.info.width,
+      height: sanitized.info.height,
+    };
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    throw new AppError(
+      "The image could not be decoded safely. Export it again as a JPG, PNG, or WebP file.",
+      400,
+      "INVALID_IMAGE_CONTENT",
+    );
+  }
 }
